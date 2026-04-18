@@ -26,7 +26,8 @@ export const RULES = [
   },
   {
     id: 'hardcoded-px',
-    pattern: /(?:text|h|w|gap|p[xy]?|m[xy]?|min-w|max-w|min-h|max-h)-\[\d+(?:\.\d+)?px\]/g,
+    pattern:
+      /(?:text|h|w|gap|space-[xy]|p[xytrbl]?|m[xytrbl]?|min-w|max-w|min-h|max-h)-\[\d+(?:\.\d+)?px\]/g,
     allowMarker: 'token-ok:',
     allowOn: ['same', 'previous'],
     message:
