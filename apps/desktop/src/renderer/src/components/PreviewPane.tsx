@@ -58,8 +58,7 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
     };
   }
   const highlightRect =
-    highlightSelector !== null &&
-    lastSelectionRectRef.current?.selector === highlightSelector
+    highlightSelector !== null && lastSelectionRectRef.current?.selector === highlightSelector
       ? lastSelectionRectRef.current
       : null;
 
