@@ -5,7 +5,7 @@ import { ErrorState } from '../preview/ErrorState';
 import { LoadingState } from '../preview/LoadingState';
 import { useCodesignStore } from '../store';
 import { CanvasErrorBar } from './CanvasErrorBar';
-import { InlineCommentComposer } from './InlineCommentComposer';
+import { InlineCommentPopover } from './InlineCommentPopover';
 import { PreviewToolbar } from './PreviewToolbar';
 
 export interface PreviewPaneProps {
@@ -37,7 +37,31 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
   const clearError = useCodesignStore((s) => s.clearError);
   const pushIframeError = useCodesignStore((s) => s.pushIframeError);
   const selectCanvasElement = useCodesignStore((s) => s.selectCanvasElement);
+  const selectedElement = useCodesignStore((s) => s.selectedElement);
+  const highlightSelector = useCodesignStore((s) => s.highlightSelector);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const lastSelectionRectRef = useRef<{
+    selector: string;
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  if (selectedElement) {
+    lastSelectionRectRef.current = {
+      selector: selectedElement.selector,
+      top: selectedElement.rect.top,
+      left: selectedElement.rect.left,
+      width: selectedElement.rect.width,
+      height: selectedElement.rect.height,
+    };
+  }
+  const highlightRect =
+    highlightSelector !== null &&
+    lastSelectionRectRef.current?.selector === highlightSelector
+      ? lastSelectionRectRef.current
+      : null;
 
   useEffect(() => {
     function onMessage(event: MessageEvent): void {
@@ -94,7 +118,19 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
             srcDoc={buildSrcdoc(previewHtml)}
             className="w-full h-full bg-[var(--color-surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-card)] border border-[var(--color-border)]"
           />
-          <InlineCommentComposer />
+          {highlightRect ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute rounded-[var(--radius-md)] ring-2 ring-[var(--color-accent)] ring-offset-2 ring-offset-[var(--color-background)] animate-[pulse_1.2s_ease-out_1]"
+              style={{
+                top: `${highlightRect.top}px`,
+                left: `${highlightRect.left}px`,
+                width: `${highlightRect.width}px`,
+                height: `${highlightRect.height}px`,
+              }}
+            />
+          ) : null}
+          <InlineCommentPopover />
         </div>
       </div>
     );
