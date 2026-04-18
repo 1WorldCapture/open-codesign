@@ -3,24 +3,18 @@ import { getElementLabel } from './element-label';
 
 describe('getElementLabel', () => {
   it('maps HTML tags to friendly roles', () => {
-    expect(
-      getElementLabel({ tag: 'H1', outerHTML: '<h1>Welcome</h1>' }).role,
-    ).toBe('heading');
-    expect(
-      getElementLabel({ tag: 'p', outerHTML: '<p>Hi there</p>' }).role,
-    ).toBe('paragraph');
-    expect(
-      getElementLabel({ tag: 'BUTTON', outerHTML: '<button>Go</button>' }).role,
-    ).toBe('button');
-    expect(
-      getElementLabel({ tag: 'svg', outerHTML: '<svg></svg>' }).role,
-    ).toBe('icon');
+    expect(getElementLabel({ tag: 'H1', outerHTML: '<h1>Welcome</h1>' }).role).toBe('heading');
+    expect(getElementLabel({ tag: 'p', outerHTML: '<p>Hi there</p>' }).role).toBe('paragraph');
+    expect(getElementLabel({ tag: 'BUTTON', outerHTML: '<button>Go</button>' }).role).toBe(
+      'button',
+    );
+    expect(getElementLabel({ tag: 'svg', outerHTML: '<svg></svg>' }).role).toBe('icon');
   });
 
   it('falls back to the lowercased tag for unknown elements', () => {
-    expect(
-      getElementLabel({ tag: 'CUSTOM-WIDGET', outerHTML: '<custom-widget />' }).role,
-    ).toBe('custom-widget');
+    expect(getElementLabel({ tag: 'CUSTOM-WIDGET', outerHTML: '<custom-widget />' }).role).toBe(
+      'custom-widget',
+    );
   });
 
   it('strips inner tags and collapses whitespace from the preview text', () => {

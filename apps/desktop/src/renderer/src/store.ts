@@ -13,6 +13,7 @@ import {
 import { create } from 'zustand';
 import type { StoreApi } from 'zustand';
 import type { CodesignApi, ExportFormat } from '../../preload/index';
+import { type ElementLabel, getElementLabel } from './lib/element-label';
 
 declare global {
   interface Window {
@@ -29,6 +30,19 @@ export type GenerationStage =
   | 'rendering'
   | 'done'
   | 'error';
+
+export interface AppliedComment {
+  id: string;
+  /**
+   * Index into `messages` of the assistant bubble this edit was applied to.
+   * `-1` means the comment was applied before any assistant message existed
+   * (e.g. on the initial generation while it was streaming).
+   */
+  assistantMessageIndex: number;
+  label: ElementLabel;
+  comment: string;
+  appliedAt: number;
+}
 
 export type ToastVariant = 'success' | 'error' | 'info';
 
@@ -85,6 +99,8 @@ interface CodesignState {
   referenceUrl: string;
   lastPromptInput: PromptRequest | null;
   selectedElement: SelectedElement | null;
+  appliedComments: AppliedComment[];
+  highlightSelector: string | null;
 
   loadConfig: () => Promise<void>;
   completeOnboarding: (next: OnboardingState) => void;
@@ -97,6 +113,9 @@ interface CodesignState {
   }) => Promise<void>;
   cancelGeneration: () => void;
   retryLastPrompt: () => Promise<void>;
+  regenerateLast: () => Promise<void>;
+  reuseLastPrompt: () => string | null;
+  saveSnapshot: (messageIndex: number) => void;
   applyInlineComment: (comment: string) => Promise<void>;
   clearError: () => void;
   clearIframeErrors: () => void;
@@ -112,6 +131,7 @@ interface CodesignState {
 
   selectCanvasElement: (selection: SelectedElement) => void;
   clearCanvasElement: () => void;
+  clearHighlight: () => void;
 
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
@@ -384,6 +404,8 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
   referenceUrl: '',
   lastPromptInput: null,
   selectedElement: null,
+  appliedComments: [],
+  highlightSelector: null,
 
   clearIframeErrors() {
     set({ iframeErrors: [] });
@@ -588,6 +610,35 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
     await get().sendPrompt(lastPromptInput);
   },
 
+  async regenerateLast() {
+    if (get().isGenerating) return;
+    const lastPromptInput = get().lastPromptInput;
+    if (!lastPromptInput) return;
+
+    const messages = [...get().messages];
+    while (messages.length > 0 && messages.at(-1)?.role === 'assistant') messages.pop();
+    if (messages.at(-1)?.role === 'user' && messages.at(-1)?.content === lastPromptInput.prompt) {
+      messages.pop();
+    }
+    set({ messages, errorMessage: null });
+    await get().sendPrompt(lastPromptInput);
+  },
+
+  reuseLastPrompt() {
+    return get().lastPromptInput?.prompt ?? null;
+  },
+
+  saveSnapshot(_messageIndex: number) {
+    // Snapshots persistence lands in PR #29 (snapshots SQLite). Until then, we
+    // surface a toast so the affordance is discoverable and we collect signal
+    // on whether users actually reach for it.
+    get().pushToast({
+      variant: 'info',
+      title: tr('notifications.snapshotQueued'),
+      description: tr('notifications.snapshotQueuedDescription'),
+    });
+  },
+
   async applyInlineComment(comment) {
     const trimmed = comment.trim();
     if (!trimmed || get().isGenerating) return;
@@ -597,12 +648,29 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
     const selection = get().selectedElement;
     if (cfg === null || !cfg.hasKey || html === null || selection === null) return;
 
-    const userMessage: ChatMessage = { role: 'user', content: `Edit ${selection.tag}: ${trimmed}` };
     const referenceUrl = normalizeReferenceUrl(get().referenceUrl);
     const attachments = uniqueFiles(get().inputFiles);
+    // Anchor the comment to the latest assistant bubble. The chip renders
+    // inline with that bubble in the chat history — it does NOT pollute the
+    // main user/assistant stream with synthesized prompts.
+    const lastAssistantIndex = (() => {
+      const msgs = get().messages;
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i]?.role === 'assistant') return i;
+      }
+      return -1;
+    })();
+    const label = getElementLabel(selection);
+    const pendingComment: AppliedComment = {
+      id: newId(),
+      assistantMessageIndex: lastAssistantIndex,
+      label,
+      comment: trimmed,
+      appliedAt: Date.now(),
+    };
 
     set((s) => ({
-      messages: [...s.messages, userMessage],
+      appliedComments: [...s.appliedComments, pendingComment],
       isGenerating: true,
       errorMessage: null,
       iframeErrors: [],
@@ -630,14 +698,24 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
         previewHtml: firstArtifact?.content ?? s.previewHtml,
         isGenerating: false,
         selectedElement: null,
+        highlightSelector: firstArtifact !== undefined ? selection.selector : s.highlightSelector,
       }));
       if (firstArtifact !== undefined) {
         get().pushToast({ variant: 'success', title: tr('notifications.inlineCommentApplied') });
+        if (typeof window !== 'undefined') {
+          window.setTimeout(() => {
+            set((s) =>
+              s.highlightSelector === selection.selector ? { highlightSelector: null } : {},
+            );
+          }, 1200);
+        }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : tr('errors.unknown');
       set((s) => ({
-        messages: [...s.messages, { role: 'assistant', content: `Error: ${msg}` }],
+        // Drop the pending chip so the user does not see a phantom edit that
+        // never landed in the canvas.
+        appliedComments: s.appliedComments.filter((c) => c.id !== pendingComment.id),
         isGenerating: false,
         errorMessage: msg,
         lastError: msg,
@@ -648,6 +726,10 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
         description: msg,
       });
     }
+  },
+
+  clearHighlight() {
+    set({ highlightSelector: null });
   },
 
   clearError() {

@@ -59,7 +59,9 @@ function shorten(text: string): string {
   return `${text.slice(0, TEXT_PREVIEW_MAX - 1)}\u2026`;
 }
 
-export function getElementLabel(selection: Pick<SelectedElement, 'tag' | 'outerHTML'>): ElementLabel {
+export function getElementLabel(
+  selection: Pick<SelectedElement, 'tag' | 'outerHTML'>,
+): ElementLabel {
   const tag = selection.tag.toLowerCase();
   const role = TAG_LABELS[tag] ?? tag;
   const text = shorten(extractText(selection.outerHTML));
