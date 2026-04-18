@@ -109,16 +109,48 @@ describe('cleanupOldTempFiles', () => {
     expect(unlinkSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('returns empty array when readdir fails', async () => {
-    const removed = await cleanupOldTempFiles('/missing', {
-      readdir: async () => {
-        throw new Error('ENOENT');
-      },
-      stat: async () => ({ mtimeMs: 0 }),
-      unlink: async () => undefined,
-      now: () => 0,
-    });
-    expect(removed).toEqual([]);
+  it('returns empty array and surfaces a warning when readdir fails', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const removed = await cleanupOldTempFiles('/missing', {
+        readdir: async () => {
+          throw new Error('ENOENT');
+        },
+        stat: async () => ({ mtimeMs: 0 }),
+        unlink: async () => undefined,
+        now: () => 0,
+      });
+      expect(removed).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[share] failed to read temp dir for cleanup'),
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('surfaces a warning when stat/unlink fails for an individual file', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const removed = await cleanupOldTempFiles(
+        '/tmp/test',
+        {
+          readdir: async () => ['open-codesign-broken-1.html'],
+          stat: async () => {
+            throw new Error('EACCES');
+          },
+          unlink: async () => undefined,
+          now: () => 0,
+        },
+        24 * 60 * 60 * 1000,
+      );
+      expect(removed).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[share] failed to cleanup temp file'),
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });
 

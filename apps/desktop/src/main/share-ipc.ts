@@ -70,7 +70,9 @@ export async function cleanupOldTempFiles(
   let entries: string[];
   try {
     entries = await deps.readdir(dir);
-  } catch {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`[share] failed to read temp dir for cleanup: ${message}`);
     return [];
   }
   const cutoff = deps.now() - maxAgeMs;
@@ -86,8 +88,9 @@ export async function cleanupOldTempFiles(
             await deps.unlink(full);
             removed.push(full);
           }
-        } catch {
-          // Ignore stat/unlink failures for cleanup; not fatal.
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          console.warn(`[share] failed to cleanup temp file ${full}: ${message}`);
         }
       }),
   );
