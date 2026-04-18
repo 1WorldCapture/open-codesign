@@ -35,6 +35,7 @@ export interface ConnectionStatus {
 }
 
 export type Theme = 'light' | 'dark';
+export type AppView = 'workspace' | 'settings';
 
 interface PromptRequest {
   prompt: string;
@@ -55,7 +56,7 @@ interface CodesignState {
   connectionStatus: ConnectionStatus;
 
   theme: Theme;
-  settingsOpen: boolean;
+  view: AppView;
   commandPaletteOpen: boolean;
   toasts: Toast[];
   iframeErrors: string[];
@@ -94,8 +95,7 @@ interface CodesignState {
 
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
-  openSettings: () => void;
-  closeSettings: () => void;
+  setView: (view: AppView) => void;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
 
@@ -224,7 +224,7 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
   connectionStatus: { state: 'no_provider', lastTestedAt: null, lastError: null },
 
   theme: readInitialTheme(),
-  settingsOpen: false,
+  view: 'workspace' as AppView,
   commandPaletteOpen: false,
   toasts: [],
   iframeErrors: [],
@@ -548,15 +548,12 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
     get().setTheme(next);
   },
 
-  openSettings() {
-    set({ settingsOpen: true, commandPaletteOpen: false });
-  },
-  closeSettings() {
-    set({ settingsOpen: false });
+  setView(view) {
+    set({ view, commandPaletteOpen: false });
   },
 
   openCommandPalette() {
-    set({ commandPaletteOpen: true, settingsOpen: false });
+    set({ commandPaletteOpen: true });
   },
   closeCommandPalette() {
     set({ commandPaletteOpen: false });
