@@ -99,10 +99,12 @@ export function TopBar({ onReuseLastPrompt }: TopBarProps = {}) {
   const reuseLastPrompt = useCodesignStore((s) => s.reuseLastPrompt);
   const pushToast = useCodesignStore((s) => s.pushToast);
 
-  let crumb = t('preview.noDesign');
+  // The breadcrumb stays as the design name regardless of generation state —
+  // generation progress lives in the PreviewToolbar status pill so it does
+  // not take over the TopBar title and erase the design's identity.
+  let crumb: string | null = null;
   if (errorMessage) crumb = t('preview.error.title');
-  else if (isGenerating) crumb = t('preview.loading.title');
-  else if (previewHtml) crumb = t('preview.ready');
+  else if (previewHtml || isGenerating || messages.length > 0) crumb = t('topbar.designUntitled');
 
   const provider = config?.provider ?? null;
   const model = config?.modelPrimary ?? null;
@@ -128,11 +130,17 @@ export function TopBar({ onReuseLastPrompt }: TopBarProps = {}) {
       style={dragStyle}
     >
       <div className="flex items-center gap-[var(--space-3)] min-w-0">
-        <Wordmark badge={t('common.preAlpha')} size="sm" />
-        <span className="text-[var(--color-text-muted)]">/</span>
-        <span className="text-[var(--text-sm)] text-[var(--color-text-secondary)] truncate">
-          {crumb}
-        </span>
+        <Wordmark badge={t('topbar.brandBadge')} size="lg" />
+        {crumb !== null ? (
+          <>
+            <span className="text-[var(--color-text-muted)]" aria-hidden="true">
+              /
+            </span>
+            <span className="text-[var(--text-sm)] text-[var(--color-text-secondary)] truncate">
+              {crumb}
+            </span>
+          </>
+        ) : null}
         <ConnectionStatusDot />
         <span className="text-[var(--color-text-muted)] hidden sm:inline">·</span>
         <span className="text-[11px] text-[var(--color-text-muted)] hidden sm:inline truncate max-w-[14rem]">

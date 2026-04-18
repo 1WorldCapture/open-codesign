@@ -6,12 +6,12 @@
 
 interface WordmarkProps {
   badge?: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export function Wordmark({ badge, size = 'md' }: WordmarkProps) {
-  const markPx = size === 'sm' ? 14 : 16;
-  const wordSize = size === 'sm' ? 'text-[13px]' : 'text-[14px]';
+  const markPx = size === 'lg' ? 20 : size === 'sm' ? 14 : 16;
+  const wordSize = size === 'lg' ? 'text-[15px]' : size === 'sm' ? 'text-[13px]' : 'text-[14px]';
   return (
     <span className="inline-flex items-center gap-[10px] leading-none">
       <Mark size={markPx} />

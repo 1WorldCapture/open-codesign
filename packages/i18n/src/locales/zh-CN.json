@@ -295,6 +295,8 @@
     }
   },
   "topbar": {
+    "brandBadge": "预览",
+    "designUntitled": "未命名设计",
     "iterate": {
       "regenerate": "重新生成",
       "reuse": "复用提示",

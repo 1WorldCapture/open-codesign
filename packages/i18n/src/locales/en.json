@@ -296,6 +296,8 @@
     }
   },
   "topbar": {
+    "brandBadge": "preview",
+    "designUntitled": "Untitled",
     "iterate": {
       "regenerate": "Regenerate",
       "reuse": "Reuse prompt",
