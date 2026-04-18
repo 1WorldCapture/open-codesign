@@ -244,7 +244,10 @@ async function runGenerate(
   // Enter streaming stage before the IPC call so the UI shows "receiving response"
   // while the main process communicates with the model provider.
   advanceStageIfCurrent(get, set, generationId, 'streaming');
-  const result = await window.codesign!.generate(payload);
+  if (!window.codesign) {
+    throw new Error('codesign IPC bridge unavailable');
+  }
+  const result = await window.codesign.generate(payload);
   // Response fully received — move through parsing → rendering before finalising.
   advanceStageIfCurrent(get, set, generationId, 'parsing');
   advanceStageIfCurrent(get, set, generationId, 'rendering');

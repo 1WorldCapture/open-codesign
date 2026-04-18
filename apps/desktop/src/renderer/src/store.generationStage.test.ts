@@ -139,7 +139,8 @@ describe('generationStage transitions', () => {
 
     // First generation: complete it
     const firstPromise = useCodesignStore.getState().sendPrompt({ prompt: 'first' });
-    const firstId = useCodesignStore.getState().activeGenerationId!;
+    const firstId = useCodesignStore.getState().activeGenerationId;
+    if (!firstId) throw new Error('expected first generation id');
     pending.get(firstId)?.({ artifacts: [{ content: '<html></html>' }], message: 'ok' });
     await firstPromise;
     expect(useCodesignStore.getState().generationStage).toBe('done');
@@ -156,7 +157,8 @@ describe('generationStage transitions', () => {
     // 'sending' must be the first stage seen after subscribing
     expect(captured[0]).toBe('sending');
 
-    const secondId = useCodesignStore.getState().activeGenerationId!;
+    const secondId = useCodesignStore.getState().activeGenerationId;
+    if (!secondId) throw new Error('expected second generation id');
     pending.get(secondId)?.({ artifacts: [{ content: '<html></html>' }], message: 'ok' });
     await secondPromise;
     unsub();

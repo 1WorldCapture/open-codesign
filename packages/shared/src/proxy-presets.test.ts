@@ -41,7 +41,7 @@ describe('PROXY_PRESETS', () => {
   it('DuckCoding preset has /v1 in baseUrl', () => {
     const duck = PROXY_PRESETS.find((p) => p.id === 'duckcoding');
     expect(duck).toBeDefined();
-    expect(duck!.baseUrl).toContain('/v1');
+    expect(duck?.baseUrl).toContain('/v1');
   });
 
   it('official-openai uses the correct baseUrl', () => {
