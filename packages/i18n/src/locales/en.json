@@ -197,6 +197,7 @@
     }
   },
   "onboarding": {
+    "stepperLabel": "Step {{current}} of {{total}}",
     "welcome": {
       "title": "Design with any model.",
       "subtitle": "Pick how you want to power your designs. You can change this later in Settings.",
@@ -388,7 +389,11 @@
     "noDesignToExport": "Generate a design first",
     "enterApiKeyToValidate": "Enter an API key to validate",
     "validateKeyFirst": "Validate the key first",
-    "fillAllFieldsToTest": "Enter provider, key and base URL to test",
+    "enterKeyToTest": "Paste an API key to test the connection",
+    "detectingProvider": "Detecting provider — please wait",
+    "unsupportedKeyForTest": "Unsupported key format — can't test this key",
+    "providerDetectIpcForTest": "Provider detection failed (IPC) — can't test this key",
+    "providerDetectNetworkForTest": "Provider detection failed (network) — can't test this key",
     "testingConnection": "Testing connection…",
     "validateKeyToContinue": "Validate your API key to continue",
     "savingInProgress": "Saving in progress",

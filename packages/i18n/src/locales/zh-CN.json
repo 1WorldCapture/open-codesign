@@ -196,6 +196,7 @@
     }
   },
   "onboarding": {
+    "stepperLabel": "第 {{current}} 步，共 {{total}} 步",
     "welcome": {
       "title": "选择你的设计模型。",
       "subtitle": "选一种方式来驱动你的设计。之后可以在设置里随时更改。",
@@ -387,7 +388,11 @@
     "noDesignToExport": "先生成一个设计再导出",
     "enterApiKeyToValidate": "请输入 API Key 进行验证",
     "validateKeyFirst": "请先验证 API Key",
-    "fillAllFieldsToTest": "请填写 provider、key 和 Base URL",
+    "enterKeyToTest": "粘贴 API Key 以测试连接",
+    "detectingProvider": "正在识别提供商，请稍候",
+    "unsupportedKeyForTest": "无法识别该 Key 格式，无法测试",
+    "providerDetectIpcForTest": "识别提供商失败（IPC），无法测试",
+    "providerDetectNetworkForTest": "识别提供商失败（网络），无法测试",
     "testingConnection": "正在测试连接…",
     "validateKeyToContinue": "验证 API Key 后才能继续",
     "savingInProgress": "正在保存",

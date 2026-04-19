@@ -1,3 +1,4 @@
+import { useT } from '@open-codesign/i18n';
 import { PROVIDER_SHORTLIST, type SupportedOnboardingProvider } from '@open-codesign/shared';
 import { Wordmark } from '@open-codesign/ui';
 import { useState } from 'react';
@@ -106,10 +107,21 @@ export function Onboarding() {
 }
 
 function Stepper({ current, total }: { current: number; total: number }) {
+  const t = useT();
+  const label = t('onboarding.stepperLabel', { current, total });
   return (
-    <div className="flex items-center gap-2">
+    <div
+      tabIndex={-1}
+      role="progressbar"
+      aria-valuenow={current}
+      aria-valuemin={1}
+      aria-valuemax={total}
+      aria-label={label}
+      aria-valuetext={label}
+      className="flex items-center gap-2"
+    >
       <span
-        className="text-[11px] text-[var(--color-text-muted)] tracking-[0.05em]"
+        className="text-[var(--text-xs)] text-[var(--color-text-muted)] tracking-[var(--tracking-label)]"
         style={{ fontFamily: 'var(--font-mono)' }}
       >
         {current.toString().padStart(2, '0')} / {total.toString().padStart(2, '0')}
