@@ -1,6 +1,6 @@
 import { useT } from '@open-codesign/i18n';
 import { Tooltip } from '@open-codesign/ui';
-import { Download } from 'lucide-react';
+import { Download, Sliders } from 'lucide-react';
 import { type ReactElement, useEffect, useRef, useState } from 'react';
 import type { ExportFormat } from '../../../preload/index';
 import { useCodesignStore } from '../store';
@@ -18,6 +18,8 @@ export function PreviewToolbar(): ReactElement {
   const exportActive = useCodesignStore((s) => s.exportActive);
   const toastMessage = useCodesignStore((s) => s.toastMessage);
   const dismissToast = useCodesignStore((s) => s.dismissToast);
+  const tweaksEnabled = useCodesignStore((s) => s.tweaksEnabled);
+  const setTweaksEnabled = useCodesignStore((s) => s.setTweaksEnabled);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -77,6 +79,28 @@ export function PreviewToolbar(): ReactElement {
           {toastMessage}
         </output>
       )}
+
+      <div className="relative">
+        <Tooltip label={t('preview.tweaks.toggle')} side="bottom">
+          <button
+            type="button"
+            disabled={disabled}
+            aria-pressed={tweaksEnabled}
+            onClick={() => setTweaksEnabled(!tweaksEnabled)}
+            className={`inline-flex items-center justify-center h-[var(--size-control-sm)] w-[var(--size-control-sm)] rounded-[var(--radius-md)] border ${
+              tweaksEnabled
+                ? 'border-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_14%,transparent)] text-[var(--color-accent)]'
+                : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
+            } disabled:opacity-40 disabled:pointer-events-none transition-[background-color,border-color,color] duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] mr-1`}
+          >
+            <Sliders
+              className="w-[var(--size-icon-sm)] h-[var(--size-icon-sm)]"
+              aria-hidden="true"
+            />
+            <span className="sr-only">{t('preview.tweaks.title')}</span>
+          </button>
+        </Tooltip>
+      </div>
 
       <div className="relative" ref={ref}>
         <Tooltip label={disabled ? t('disabledReason.noDesignToExport') : undefined} side="bottom">

@@ -50,7 +50,17 @@
     "noDesign": "还没有设计",
     "clickToComment": "点击预览中的任意元素即可留下局部评论。",
     "runtimeError": "预览运行时错误",
-    "dismissErrors": "关闭预览错误"
+    "dismissErrors": "关闭预览错误",
+    "tweaks": {
+      "title": "调参",
+      "toggle": "打开/关闭调参面板",
+      "empty": "未检测到可调参数",
+      "color": "颜色",
+      "size": "尺寸",
+      "boolean": "开关",
+      "string": "文本",
+      "reset": "重置"
+    }
   },
   "chat": {
     "placeholder": "想设计什么？",

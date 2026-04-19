@@ -1,4 +1,5 @@
 import { i18n } from '@open-codesign/i18n';
+import type { TweakVar } from '@open-codesign/runtime';
 import {
   type ChatMessage,
   type LocalInputFile,
@@ -86,6 +87,9 @@ interface CodesignState {
   lastPromptInput: PromptRequest | null;
   selectedElement: SelectedElement | null;
 
+  tweaksEnabled: boolean;
+  tweaksVars: TweakVar[];
+
   loadConfig: () => Promise<void>;
   completeOnboarding: (next: OnboardingState) => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
@@ -112,6 +116,10 @@ interface CodesignState {
 
   selectCanvasElement: (selection: SelectedElement) => void;
   clearCanvasElement: () => void;
+
+  setTweaksEnabled: (enabled: boolean) => void;
+  setTweaksVars: (vars: TweakVar[]) => void;
+  updateTweakVar: (name: string, value: string) => void;
 
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
@@ -377,6 +385,9 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
   referenceUrl: '',
   lastPromptInput: null,
   selectedElement: null,
+
+  tweaksEnabled: false,
+  tweaksVars: [],
 
   clearIframeErrors() {
     set({ iframeErrors: [] });
@@ -672,6 +683,20 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
 
   clearCanvasElement() {
     set({ selectedElement: null });
+  },
+
+  setTweaksEnabled(enabled) {
+    set({ tweaksEnabled: enabled });
+  },
+
+  setTweaksVars(vars) {
+    set({ tweaksVars: vars });
+  },
+
+  updateTweakVar(name, value) {
+    set((s) => ({
+      tweaksVars: s.tweaksVars.map((v) => (v.name === name ? { ...v, value } : v)),
+    }));
   },
 
   setTheme(theme) {

@@ -1,9 +1,22 @@
 import { OVERLAY_SCRIPT } from './overlay';
+import { TWEAKS_SCRIPT } from './tweaks-runtime';
 
 export { OVERLAY_SCRIPT, isOverlayMessage } from './overlay';
 export type { OverlayMessage } from './overlay';
 export { isIframeErrorMessage } from './iframe-errors';
 export type { IframeErrorMessage } from './iframe-errors';
+export {
+  TWEAKS_SCRIPT,
+  inferTweakType,
+  isTweakVarsDetectedMessage,
+  buildTweakVarMessage,
+} from './tweaks-runtime';
+export type {
+  TweakVar,
+  TweakVarType,
+  TweakVarsDetectedMessage,
+  TweakVarMessage,
+} from './tweaks-runtime';
 
 /**
  * Build a complete srcdoc HTML string for the preview iframe.
@@ -21,7 +34,7 @@ export function buildSrcdoc(userHtml: string): string {
   if (/<\/body\s*>/i.test(stripped)) {
     return stripped.replace(
       /<\/body\s*>(?![\s\S]*<\/body\s*>)/i,
-      `<script>${OVERLAY_SCRIPT}</script></body>`,
+      `<script>${OVERLAY_SCRIPT}</script><script>${TWEAKS_SCRIPT}</script></body>`,
     );
   }
 
@@ -35,6 +48,7 @@ export function buildSrcdoc(userHtml: string): string {
 <body>
 ${stripped}
 <script>${OVERLAY_SCRIPT}</script>
+<script>${TWEAKS_SCRIPT}</script>
 </body>
 </html>`;
 }

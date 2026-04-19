@@ -436,3 +436,45 @@ describe('useCodesignStore project storage error surfacing', () => {
     expect(state.generationStage).toBe('idle');
   });
 });
+
+describe('useCodesignStore tweaks state', () => {
+  it('toggles tweaksEnabled', () => {
+    expect(useCodesignStore.getState().tweaksEnabled).toBe(false);
+    useCodesignStore.getState().setTweaksEnabled(true);
+    expect(useCodesignStore.getState().tweaksEnabled).toBe(true);
+    useCodesignStore.getState().setTweaksEnabled(false);
+    expect(useCodesignStore.getState().tweaksEnabled).toBe(false);
+  });
+
+  it('replaces the full tweaksVars list via setTweaksVars', () => {
+    useCodesignStore.getState().setTweaksVars([
+      { name: '--accent', value: '#ff0000', type: 'color' },
+      { name: '--gap', value: '16px', type: 'number' },
+    ]);
+    expect(useCodesignStore.getState().tweaksVars).toHaveLength(2);
+
+    useCodesignStore.getState().setTweaksVars([]);
+    expect(useCodesignStore.getState().tweaksVars).toEqual([]);
+  });
+
+  it('updateTweakVar mutates only the matching entry', () => {
+    useCodesignStore.getState().setTweaksVars([
+      { name: '--accent', value: '#ff0000', type: 'color' },
+      { name: '--gap', value: '16px', type: 'number' },
+    ]);
+    useCodesignStore.getState().updateTweakVar('--accent', '#00ff00');
+    const vars = useCodesignStore.getState().tweaksVars;
+    expect(vars.find((v) => v.name === '--accent')?.value).toBe('#00ff00');
+    expect(vars.find((v) => v.name === '--gap')?.value).toBe('16px');
+  });
+
+  it('updateTweakVar is a no-op for unknown names', () => {
+    useCodesignStore
+      .getState()
+      .setTweaksVars([{ name: '--accent', value: '#ff0000', type: 'color' }]);
+    useCodesignStore.getState().updateTweakVar('--missing', 'whatever');
+    expect(useCodesignStore.getState().tweaksVars).toEqual([
+      { name: '--accent', value: '#ff0000', type: 'color' },
+    ]);
+  });
+});

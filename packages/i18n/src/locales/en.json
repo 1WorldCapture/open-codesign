@@ -51,7 +51,17 @@
     "noDesign": "No design yet",
     "clickToComment": "Click any element in the preview to leave an inline comment.",
     "runtimeError": "Preview runtime error",
-    "dismissErrors": "Dismiss preview errors"
+    "dismissErrors": "Dismiss preview errors",
+    "tweaks": {
+      "title": "Tweaks",
+      "toggle": "Toggle Tweaks panel",
+      "empty": "No adjustable variables detected",
+      "color": "Color",
+      "size": "Size",
+      "boolean": "Toggle",
+      "string": "Text",
+      "reset": "Reset"
+    }
   },
   "chat": {
     "placeholder": "Describe what to design…",

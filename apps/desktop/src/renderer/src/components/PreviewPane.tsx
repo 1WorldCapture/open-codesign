@@ -1,5 +1,10 @@
 import { useT } from '@open-codesign/i18n';
-import { buildSrcdoc, isIframeErrorMessage, isOverlayMessage } from '@open-codesign/runtime';
+import {
+  buildSrcdoc,
+  isIframeErrorMessage,
+  isOverlayMessage,
+  isTweakVarsDetectedMessage,
+} from '@open-codesign/runtime';
 import { useEffect, useRef } from 'react';
 import { EmptyState } from '../preview/EmptyState';
 import { ErrorState } from '../preview/ErrorState';
@@ -8,6 +13,7 @@ import { useCodesignStore } from '../store';
 import { CanvasErrorBar } from './CanvasErrorBar';
 import { InlineCommentComposer } from './InlineCommentComposer';
 import { PreviewToolbar } from './PreviewToolbar';
+import { TweaksPanel } from './TweaksPanel';
 
 export interface PreviewPaneProps {
   onPickStarter: (prompt: string) => void;
@@ -39,6 +45,8 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
   const clearError = useCodesignStore((s) => s.clearError);
   const pushIframeError = useCodesignStore((s) => s.pushIframeError);
   const selectCanvasElement = useCodesignStore((s) => s.selectCanvasElement);
+  const setTweaksVars = useCodesignStore((s) => s.setTweaksVars);
+  const tweaksEnabled = useCodesignStore((s) => s.tweaksEnabled);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -52,6 +60,11 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
           outerHTML: event.data.outerHTML,
           rect: event.data.rect,
         });
+        return;
+      }
+
+      if (isTweakVarsDetectedMessage(event.data)) {
+        setTweaksVars(event.data.vars);
         return;
       }
 
@@ -69,7 +82,7 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
 
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [pushIframeError, selectCanvasElement]);
+  }, [pushIframeError, selectCanvasElement, setTweaksVars]);
 
   let body: React.ReactNode;
   if (errorMessage) {
@@ -111,7 +124,12 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
     <div className="flex flex-col min-h-0 flex-1">
       <PreviewToolbar />
       <CanvasErrorBar />
-      <div className="flex-1 overflow-auto">{body}</div>
+      <div className="flex flex-1 min-h-0">
+        <div className="flex-1 overflow-auto">{body}</div>
+        {tweaksEnabled && previewHtml ? (
+          <TweaksPanel iframeWindow={iframeRef.current?.contentWindow ?? null} />
+        ) : null}
+      </div>
     </div>
   );
 }
