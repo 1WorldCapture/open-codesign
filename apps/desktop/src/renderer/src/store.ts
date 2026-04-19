@@ -55,6 +55,19 @@ export type InteractionMode = 'default' | 'comment';
 
 export type PreviewViewport = 'desktop' | 'tablet' | 'mobile';
 
+export interface UsageSnapshot {
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+}
+
+export interface WeekUsage {
+  isoWeek: string;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+}
+
 interface PromptRequest {
   prompt: string;
   attachments: LocalInputFile[];
@@ -68,6 +81,8 @@ interface CodesignState {
   activeGenerationId: string | null;
   generationStage: GenerationStage;
   streamingTokenCount: number;
+  lastUsage: UsageSnapshot | null;
+  weekUsage: WeekUsage;
   errorMessage: string | null;
   lastError: string | null;
   config: OnboardingState | null;
@@ -160,6 +175,7 @@ interface CodesignState {
 
 const THEME_STORAGE_KEY = 'open-codesign:theme';
 const PROJECTS_STORAGE_KEY = 'open-codesign:projects:v1';
+const WEEK_USAGE_STORAGE_KEY = 'open-codesign:week-usage';
 
 type ProjectsReadResult = { projects: Project[]; error: string | null };
 
@@ -215,6 +231,125 @@ function persistProjects(projects: Project[]): { error: string | null } {
     console.warn('[open-codesign] Failed to persist projects to storage:', err);
     return { error: msg };
   }
+}
+
+export function isoWeekKey(date: Date): string {
+  // ISO 8601 week-numbering: Thursday-anchored, Monday-start.
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
+function isFiniteUsageNumber(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v) && v >= 0;
+}
+
+export function coerceUsageSnapshot(result: {
+  inputTokens?: unknown;
+  outputTokens?: unknown;
+  costUsd?: unknown;
+}): { usage: UsageSnapshot; rejected: string[] } {
+  const rejected: string[] = [];
+  const pick = (label: string, v: unknown): number => {
+    if (v === undefined) return 0;
+    if (isFiniteUsageNumber(v)) return v;
+    rejected.push(label);
+    return 0;
+  };
+  return {
+    usage: {
+      inputTokens: pick('inputTokens', result.inputTokens),
+      outputTokens: pick('outputTokens', result.outputTokens),
+      costUsd: pick('costUsd', result.costUsd),
+    },
+    rejected,
+  };
+}
+
+function readStoredWeekUsage(now: Date): WeekUsage {
+  const fresh: WeekUsage = {
+    isoWeek: isoWeekKey(now),
+    inputTokens: 0,
+    outputTokens: 0,
+    costUsd: 0,
+  };
+  if (typeof window === 'undefined') return fresh;
+  let warnReason: string | null = null;
+  try {
+    const raw = window.localStorage.getItem(WEEK_USAGE_STORAGE_KEY);
+    if (!raw) return fresh;
+    const parsed = JSON.parse(raw) as Partial<WeekUsage>;
+    if (
+      typeof parsed.isoWeek !== 'string' ||
+      !isFiniteUsageNumber(parsed.inputTokens) ||
+      !isFiniteUsageNumber(parsed.outputTokens) ||
+      !isFiniteUsageNumber(parsed.costUsd)
+    ) {
+      warnReason = 'weekly usage entry has unexpected shape';
+    } else if (parsed.isoWeek === fresh.isoWeek) {
+      return {
+        isoWeek: parsed.isoWeek,
+        inputTokens: parsed.inputTokens,
+        outputTokens: parsed.outputTokens,
+        costUsd: parsed.costUsd,
+      };
+    }
+    // else: stale week — silently roll over (not corruption).
+  } catch (err) {
+    warnReason = err instanceof Error ? err.message : String(err);
+  }
+  if (warnReason !== null) surfaceWeekUsageReadFailure(warnReason);
+  return fresh;
+}
+
+// Surface storage corruption to the user instead of silently dropping their
+// running totals. Deferred via setTimeout because this can run during store
+// initialisation, before the toast queue exists.
+function surfaceWeekUsageReadFailure(reason: string): void {
+  const fallback = () =>
+    console.warn('[open-codesign] failed to read weekly usage from storage:', reason);
+  if (typeof window === 'undefined') {
+    fallback();
+    return;
+  }
+  setTimeout(() => {
+    try {
+      useCodesignStore.getState().pushToast({
+        variant: 'error',
+        title: tr('errors.weekUsageReadFailed'),
+        description: reason,
+      });
+    } catch {
+      fallback();
+    }
+  }, 0);
+}
+
+function persistWeekUsage(usage: WeekUsage): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    window.localStorage.setItem(WEEK_USAGE_STORAGE_KEY, JSON.stringify(usage));
+    return null;
+  } catch (err) {
+    return err instanceof Error ? err.message : 'Failed to persist weekly usage';
+  }
+}
+
+export function accumulateWeekUsage(prev: WeekUsage, delta: UsageSnapshot, now: Date): WeekUsage {
+  const currentKey = isoWeekKey(now);
+  const base =
+    prev.isoWeek === currentKey
+      ? prev
+      : { isoWeek: currentKey, inputTokens: 0, outputTokens: 0, costUsd: 0 };
+  return {
+    isoWeek: currentKey,
+    inputTokens: base.inputTokens + Math.max(0, delta.inputTokens),
+    outputTokens: base.outputTokens + Math.max(0, delta.outputTokens),
+    costUsd: base.costUsd + Math.max(0, delta.costUsd),
+  };
 }
 
 function readInitialTheme(): Theme {
@@ -426,21 +561,57 @@ function applyGenerateSuccess(
   get: GetState,
   generationId: string,
   prompt: string,
-  result: { artifacts: Array<{ type?: string; content: string }>; message: string },
+  result: {
+    artifacts: Array<{ type?: string; content: string }>;
+    message: string;
+    inputTokens?: number;
+    outputTokens?: number;
+    costUsd?: number;
+  },
 ): void {
   const firstArtifact = result.artifacts[0];
   const assistantMessage = result.message || tr('common.done');
-  finishIfCurrent(set, generationId, (state) => ({
-    messages: [...state.messages, { role: 'assistant', content: assistantMessage }],
-    previewHtml: firstArtifact?.content ?? state.previewHtml,
-    isGenerating: false,
-    activeGenerationId: null,
-    generationStage: 'done' as GenerationStage,
-  }));
-  const designId = get().currentDesignId;
-  if (designId) {
-    const artifact = artifactFromResult(firstArtifact, prompt, assistantMessage);
-    void persistDesignState(get, designId, get().messages, get().previewHtml, artifact);
+  const { usage, rejected: rejectedUsageFields } = coerceUsageSnapshot(result);
+  let persistError: string | null = null;
+  let didApply = false;
+  finishIfCurrent(set, generationId, (state) => {
+    const nextWeek = accumulateWeekUsage(state.weekUsage, usage, new Date());
+    persistError = persistWeekUsage(nextWeek);
+    didApply = true;
+    return {
+      messages: [...state.messages, { role: 'assistant', content: assistantMessage }],
+      previewHtml: firstArtifact?.content ?? state.previewHtml,
+      isGenerating: false,
+      activeGenerationId: null,
+      generationStage: 'done' as GenerationStage,
+      streamingTokenCount: usage.inputTokens + usage.outputTokens,
+      lastUsage: usage,
+      weekUsage: nextWeek,
+    };
+  });
+  if (didApply) {
+    const designId = get().currentDesignId;
+    if (designId) {
+      const artifact = artifactFromResult(firstArtifact, prompt, assistantMessage);
+      void persistDesignState(get, designId, get().messages, get().previewHtml, artifact);
+    }
+    if (rejectedUsageFields.length > 0) {
+      const detail = rejectedUsageFields.join(', ');
+      console.warn('[open-codesign] dropped non-finite usage values from provider:', detail);
+      get().pushToast({
+        variant: 'error',
+        title: tr('errors.weekUsageInvalid'),
+        description: detail,
+      });
+    }
+    if (persistError) {
+      console.warn('[open-codesign] failed to persist weekly usage:', persistError);
+      get().pushToast({
+        variant: 'error',
+        title: tr('errors.storageFailed'),
+        description: persistError,
+      });
+    }
   }
 }
 
@@ -494,11 +665,18 @@ async function runGenerate(
   advanceStageIfCurrent(get, set, generationId, 'parsing');
   advanceStageIfCurrent(get, set, generationId, 'rendering');
   applyGenerateSuccess(
+    get,
     set,
     get,
     generationId,
     payload.prompt,
-    result as { artifacts: Array<{ type?: string; content: string }>; message: string },
+    result as {
+      artifacts: Array<{ type?: string; content: string }>;
+      message: string;
+      inputTokens?: number;
+      outputTokens?: number;
+      costUsd?: number;
+    },
   );
 }
 
@@ -530,6 +708,8 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
   activeGenerationId: null,
   generationStage: 'idle' as GenerationStage,
   streamingTokenCount: 0,
+  lastUsage: null,
+  weekUsage: readStoredWeekUsage(new Date()),
   errorMessage: null,
   lastError: null,
   config: null,
@@ -801,16 +981,41 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
       });
       const firstArtifact = result.artifacts[0];
       const assistantText = result.message || tr('common.applied');
-      set((s) => ({
-        messages: [...s.messages, { role: 'assistant', content: assistantText }],
-        previewHtml: firstArtifact?.content ?? s.previewHtml,
-        isGenerating: false,
-        selectedElement: null,
-      }));
+      const { usage, rejected: rejectedUsageFields } = coerceUsageSnapshot(result);
+      let persistError: string | null = null;
+      set((s) => {
+        const nextWeek = accumulateWeekUsage(s.weekUsage, usage, new Date());
+        persistError = persistWeekUsage(nextWeek);
+        return {
+          messages: [...s.messages, { role: 'assistant', content: assistantText }],
+          previewHtml: firstArtifact?.content ?? s.previewHtml,
+          isGenerating: false,
+          selectedElement: null,
+          lastUsage: usage,
+          weekUsage: nextWeek,
+        };
+      });
       const designId = get().currentDesignId;
       if (designId) {
         const artifact = artifactFromResult(firstArtifact, userMessage.content, assistantText);
         void persistDesignState(get, designId, get().messages, get().previewHtml, artifact);
+      }
+      if (rejectedUsageFields.length > 0) {
+        const detail = rejectedUsageFields.join(', ');
+        console.warn('[open-codesign] dropped non-finite usage values from provider:', detail);
+        get().pushToast({
+          variant: 'error',
+          title: tr('errors.weekUsageInvalid'),
+          description: detail,
+        });
+      }
+      if (persistError) {
+        console.warn('[open-codesign] failed to persist weekly usage:', persistError);
+        get().pushToast({
+          variant: 'error',
+          title: tr('errors.storageFailed'),
+          description: persistError,
+        });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : tr('errors.unknown');

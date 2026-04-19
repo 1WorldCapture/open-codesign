@@ -2,7 +2,7 @@ import { initI18n } from '@open-codesign/i18n';
 import type { LocalInputFile, OnboardingState, SelectedElement } from '@open-codesign/shared';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GenerationStage } from './store';
-import { useCodesignStore } from './store';
+import { accumulateWeekUsage, coerceUsageSnapshot, isoWeekKey, useCodesignStore } from './store';
 
 const READY_CONFIG: OnboardingState = {
   hasKey: true,
@@ -247,6 +247,193 @@ describe('useCodesignStore view navigation', () => {
     useCodesignStore.getState().setView('settings');
     useCodesignStore.getState().setView('workspace');
     expect(useCodesignStore.getState().view).toBe('workspace');
+  });
+});
+
+describe('useCodesignStore token usage tracking', () => {
+  beforeAll(async () => {
+    await initI18n('en');
+  });
+
+  it('records lastUsage and accumulates weekUsage when generate resolves with usage fields', async () => {
+    const generate = vi.fn(() =>
+      Promise.resolve({
+        artifacts: [{ content: '<html>ok</html>' }],
+        message: 'Done.',
+        inputTokens: 1200,
+        outputTokens: 800,
+        costUsd: 0.0125,
+      }),
+    );
+
+    vi.stubGlobal('window', {
+      codesign: { generate },
+      setTimeout,
+      localStorage: {
+        getItem: () => null,
+        setItem: () => {
+          /* noop */
+        },
+      },
+    });
+
+    useCodesignStore.setState({
+      weekUsage: { isoWeek: '2099-W01', inputTokens: 0, outputTokens: 0, costUsd: 0 },
+      lastUsage: null,
+    });
+
+    await useCodesignStore.getState().sendPrompt({ prompt: 'design landing' });
+
+    const state = useCodesignStore.getState();
+    expect(state.lastUsage).toEqual({ inputTokens: 1200, outputTokens: 800, costUsd: 0.0125 });
+    expect(state.weekUsage.inputTokens).toBe(1200);
+    expect(state.weekUsage.outputTokens).toBe(800);
+    expect(state.weekUsage.costUsd).toBeCloseTo(0.0125, 6);
+    expect(state.streamingTokenCount).toBe(2000);
+  });
+
+  it('treats missing usage fields as zero without crashing', async () => {
+    const generate = vi.fn(() =>
+      Promise.resolve({
+        artifacts: [{ content: '<html>ok</html>' }],
+        message: 'Done.',
+      }),
+    );
+
+    vi.stubGlobal('window', {
+      codesign: { generate },
+      setTimeout,
+      localStorage: { getItem: () => null, setItem: () => undefined },
+    });
+
+    await useCodesignStore.getState().sendPrompt({ prompt: 'fallback' });
+
+    const state = useCodesignStore.getState();
+    expect(state.lastUsage).toEqual({ inputTokens: 0, outputTokens: 0, costUsd: 0 });
+  });
+
+  it('surfaces a toast and preserves in-memory weekUsage when localStorage write throws', async () => {
+    const generate = vi.fn(() =>
+      Promise.resolve({
+        artifacts: [{ content: '<html>ok</html>' }],
+        message: 'Done.',
+        inputTokens: 100,
+        outputTokens: 50,
+        costUsd: 0.01,
+      }),
+    );
+
+    const setItem = vi.fn(() => {
+      throw new Error('QuotaExceeded');
+    });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    vi.stubGlobal('window', {
+      codesign: { generate },
+      setTimeout,
+      localStorage: { getItem: () => null, setItem },
+    });
+
+    useCodesignStore.setState({
+      weekUsage: {
+        isoWeek: isoWeekKey(new Date()),
+        inputTokens: 7,
+        outputTokens: 3,
+        costUsd: 0.02,
+      },
+      lastUsage: null,
+    });
+
+    await useCodesignStore.getState().sendPrompt({ prompt: 'persist failure' });
+
+    const state = useCodesignStore.getState();
+    expect(setItem).toHaveBeenCalled();
+    expect(state.weekUsage.inputTokens).toBe(107);
+    expect(state.weekUsage.outputTokens).toBe(53);
+    expect(state.weekUsage.costUsd).toBeCloseTo(0.03, 6);
+    expect(state.lastUsage).toEqual({ inputTokens: 100, outputTokens: 50, costUsd: 0.01 });
+    expect(state.toasts.at(-1)).toMatchObject({
+      variant: 'error',
+      description: 'QuotaExceeded',
+    });
+    expect(warnSpy).toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+  });
+});
+
+describe('accumulateWeekUsage', () => {
+  it('adds delta to current bucket when isoWeek matches', () => {
+    const prev = { isoWeek: '2026-W16', inputTokens: 100, outputTokens: 50, costUsd: 0.5 };
+    const next = accumulateWeekUsage(
+      prev,
+      { inputTokens: 30, outputTokens: 20, costUsd: 0.25 },
+      new Date('2026-04-19T12:00:00Z'),
+    );
+    expect(next.isoWeek).toBe('2026-W16');
+    expect(next.inputTokens).toBe(130);
+    expect(next.outputTokens).toBe(70);
+    expect(next.costUsd).toBeCloseTo(0.75, 6);
+  });
+
+  it('resets bucket when the ISO week has rolled over', () => {
+    const prev = { isoWeek: '2025-W01', inputTokens: 999, outputTokens: 999, costUsd: 9 };
+    const next = accumulateWeekUsage(
+      prev,
+      { inputTokens: 5, outputTokens: 7, costUsd: 0.01 },
+      new Date('2026-04-19T12:00:00Z'),
+    );
+    expect(next.isoWeek).not.toBe('2025-W01');
+    expect(next.inputTokens).toBe(5);
+    expect(next.outputTokens).toBe(7);
+    expect(next.costUsd).toBeCloseTo(0.01, 6);
+  });
+
+  it('clamps negative deltas to zero', () => {
+    const prev = { isoWeek: isoWeekKey(new Date()), inputTokens: 10, outputTokens: 10, costUsd: 1 };
+    const next = accumulateWeekUsage(
+      prev,
+      { inputTokens: -5, outputTokens: -3, costUsd: -0.5 },
+      new Date(),
+    );
+    expect(next.inputTokens).toBe(10);
+    expect(next.outputTokens).toBe(10);
+    expect(next.costUsd).toBe(1);
+  });
+});
+
+describe('coerceUsageSnapshot', () => {
+  it('rejects NaN inputs and reports the field', () => {
+    const { usage, rejected } = coerceUsageSnapshot({
+      inputTokens: Number.NaN,
+      outputTokens: 200,
+      costUsd: 0.01,
+    });
+    expect(usage.inputTokens).toBe(0);
+    expect(usage.outputTokens).toBe(200);
+    expect(usage.costUsd).toBe(0.01);
+    expect(rejected).toEqual(['inputTokens']);
+  });
+
+  it('rejects Infinity inputs and reports the field', () => {
+    const { usage, rejected } = coerceUsageSnapshot({
+      inputTokens: 100,
+      outputTokens: Number.POSITIVE_INFINITY,
+      costUsd: Number.NEGATIVE_INFINITY,
+    });
+    expect(usage.outputTokens).toBe(0);
+    expect(usage.costUsd).toBe(0);
+    expect(rejected).toEqual(['outputTokens', 'costUsd']);
+  });
+
+  it('accepts finite zero without rejecting', () => {
+    const { usage, rejected } = coerceUsageSnapshot({
+      inputTokens: 0,
+      outputTokens: 0,
+      costUsd: 0,
+    });
+    expect(usage).toEqual({ inputTokens: 0, outputTokens: 0, costUsd: 0 });
+    expect(rejected).toEqual([]);
   });
 });
 

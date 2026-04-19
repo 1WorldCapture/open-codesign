@@ -299,8 +299,9 @@
       }
     },
     "spendThisWeek": "this week",
-    "byokTitle": "BYOK — bring-your-own-key. Full usage tracking coming soon.",
-    "spendTooltip": "Spending this week (full tracking coming soon)"
+    "byokTitle": "BYOK — bring-your-own-key. Usage tracked locally.",
+    "spendTooltip": "Estimated spending this week",
+    "lastUsageTooltip": "Last: {{input}} in / {{output}} out · ${{cost}}"
   },
   "theme": {
     "toggleAria": "Toggle theme",
@@ -413,7 +414,10 @@
     "modelListFailed": "Could not load model list.",
     "unknown": "Unknown error",
     "localePersistFailed": "Failed to save language preference",
-    "projectStorageFailed": "Couldn't read or write projects on this device. Your changes may not persist."
+    "projectStorageFailed": "Couldn't read or write projects on this device. Your changes may not persist.",
+    "storageFailed": "Failed to save to local storage",
+    "weekUsageInvalid": "Provider returned invalid usage values; ignored to keep weekly totals accurate.",
+    "weekUsageReadFailed": "Couldn't read this week's usage from local storage. Showing fresh totals."
   },
   "projects": {
     "untitled": "Untitled design",
