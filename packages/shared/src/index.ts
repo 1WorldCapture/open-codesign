@@ -236,7 +236,13 @@ export type { ProxyPresetId } from './proxy-presets';
 export { DesignTokenV1, DesignTokenSet } from './design-token';
 export type { DesignToken } from './design-token';
 
-export { ChatMessageKind, ChatMessageRowV1, DesignMessageV1, DesignSnapshotV1, DesignV1 } from './snapshot';
+export {
+  ChatMessageKind,
+  ChatMessageRowV1,
+  DesignMessageV1,
+  DesignSnapshotV1,
+  DesignV1,
+} from './snapshot';
 export type {
   ChatAppendInput,
   ChatArtifactDeliveredPayload,

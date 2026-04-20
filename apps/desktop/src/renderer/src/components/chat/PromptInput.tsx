@@ -40,7 +40,13 @@ export interface PromptInputProps {
  *   Meta/Ctrl+Enter — submit (power-user muscle memory)
  *   Shift+Enter     — newline
  */
-export function PromptInput({ prompt, setPrompt, onSubmit, onCancel, isGenerating }: PromptInputProps) {
+export function PromptInput({
+  prompt,
+  setPrompt,
+  onSubmit,
+  onCancel,
+  isGenerating,
+}: PromptInputProps) {
   const t = useT();
   const taRef = useRef<HTMLTextAreaElement>(null);
 

@@ -1,5 +1,5 @@
 import { useT } from '@open-codesign/i18n';
-import { type BuiltinSkillId, BUILTIN_SKILLS } from '../../store';
+import { BUILTIN_SKILLS, type BuiltinSkillId } from '../../store';
 
 interface SkillChipBarProps {
   attached: BuiltinSkillId[];
@@ -17,7 +17,11 @@ interface SkillChipBarProps {
 export function SkillChipBar({ attached, onToggle, disabled }: SkillChipBarProps) {
   const t = useT();
   return (
-    <div className="flex flex-wrap gap-[var(--space-1_5)]" role="group" aria-label={t('sidebar.chat.skills.label')}>
+    <fieldset
+      className="flex flex-wrap gap-[var(--space-1_5)] border-0 p-0 m-0"
+      aria-label={t('sidebar.chat.skills.label')}
+    >
+      <legend className="sr-only">{t('sidebar.chat.skills.label')}</legend>
       {BUILTIN_SKILLS.map((skill) => {
         const active = attached.includes(skill);
         return (
@@ -37,6 +41,6 @@ export function SkillChipBar({ attached, onToggle, disabled }: SkillChipBarProps
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

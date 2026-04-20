@@ -54,10 +54,7 @@ function parseAppendInput(raw: unknown): ChatAppendInput {
   }
   const kind = r['kind'];
   if (typeof kind !== 'string' || !VALID_KINDS.includes(kind as ChatMessageKind)) {
-    throw new CodesignError(
-      `kind must be one of: ${VALID_KINDS.join(', ')}`,
-      'IPC_BAD_INPUT',
-    );
+    throw new CodesignError(`kind must be one of: ${VALID_KINDS.join(', ')}`, 'IPC_BAD_INPUT');
   }
   const snapshotId = r['snapshotId'];
   if (snapshotId !== undefined && snapshotId !== null && typeof snapshotId !== 'string') {
@@ -99,12 +96,15 @@ export function registerChatMessagesIpc(db: Database): void {
     }
   });
 
-  ipcMain.handle('chat:v1:seed-from-snapshots', (_e: unknown, raw: unknown): { inserted: number } => {
-    const designId = parseDesignId(raw, 'chat:v1:seed-from-snapshots');
-    const inserted = seedChatFromSnapshots(db, designId);
-    if (inserted > 0) logger.info('chat.seeded', { designId, inserted });
-    return { inserted };
-  });
+  ipcMain.handle(
+    'chat:v1:seed-from-snapshots',
+    (_e: unknown, raw: unknown): { inserted: number } => {
+      const designId = parseDesignId(raw, 'chat:v1:seed-from-snapshots');
+      const inserted = seedChatFromSnapshots(db, designId);
+      if (inserted > 0) logger.info('chat.seeded', { designId, inserted });
+      return { inserted };
+    },
+  );
 }
 
 export function registerChatMessagesUnavailableIpc(reason: string): void {

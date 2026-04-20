@@ -91,7 +91,9 @@ export function ToolCard({ variant, status, title, bullets, todos }: ToolCardPro
                     }`}
                     aria-hidden
                   />
-                  <span className={todo.checked ? 'line-through text-[var(--color-text-muted)]' : ''}>
+                  <span
+                    className={todo.checked ? 'line-through text-[var(--color-text-muted)]' : ''}
+                  >
                     {todo.text}
                   </span>
                 </div>

@@ -12,6 +12,7 @@ import {
 } from '@open-codesign/shared';
 import type { BrowserWindow as ElectronBrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
+import { registerChatMessagesIpc, registerChatMessagesUnavailableIpc } from './chat-messages-ipc';
 import { registerConnectionIpc } from './connection-ipc';
 import { scanDesignSystem } from './design-system';
 import { BrowserWindow, app, dialog, ipcMain, shell } from './electron-runtime';
@@ -32,10 +33,6 @@ import { preparePromptContext } from './prompt-context';
 import { resolveActiveModel } from './provider-settings';
 import { safeInitSnapshotsDb } from './snapshots-db';
 import { registerSnapshotsIpc, registerSnapshotsUnavailableIpc } from './snapshots-ipc';
-import {
-  registerChatMessagesIpc,
-  registerChatMessagesUnavailableIpc,
-} from './chat-messages-ipc';
 
 let mainWindow: ElectronBrowserWindow | null = null;
 

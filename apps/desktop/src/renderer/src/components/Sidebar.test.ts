@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getTextareaLineHeight } from './Sidebar';
+import { getTextareaLineHeight } from './chat/PromptInput';
 
 afterEach(() => {
   vi.unstubAllGlobals();

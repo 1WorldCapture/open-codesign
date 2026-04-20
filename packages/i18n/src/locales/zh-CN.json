@@ -82,7 +82,41 @@
     "activeDesignSystem": "当前设计系统",
     "clear": "清除",
     "designSystemHint": "关联一个仓库，提取颜色、排版、间距等样式线索，用于后续生成。",
-    "startHint": "先写一段简要需求，再补充文件、链接或本地仓库，让生成结果更贴近你的上下文。"
+    "startHint": "先写一段简要需求，再补充文件、链接或本地仓库，让生成结果更贴近你的上下文。",
+    "ariaLabel": "对话面板",
+    "noDesign": "暂无设计",
+    "newChat": "新对话",
+    "collapse": "收起侧边栏",
+    "expand": "展开侧边栏",
+    "tabs": {
+      "ariaLabel": "侧边栏标签",
+      "chat": "对话",
+      "comments": "批注"
+    },
+    "chat": {
+      "youLabel": "你",
+      "claudeLabel": "Claude",
+      "noModel": "未选择模型",
+      "tokensLine": "约 {{count}} tokens",
+      "artifactDelivered": "已生成",
+      "artifactDefaultLabel": "design.html",
+      "tool": {
+        "done": "完成"
+      },
+      "skills": {
+        "label": "附加 Skill"
+      },
+      "skill": {
+        "dashboard": "仪表盘",
+        "mobile-mock": "移动端",
+        "marketing": "营销页",
+        "editorial": "内容排版"
+      }
+    },
+    "comments": {
+      "title": "批注模式",
+      "body": "画布内批注将在 v0.2.1 支持。届时你可以点选预览中的任意元素，写下注释或编辑指令。"
+    }
   },
   "settings": {
     "title": "设置",

@@ -83,7 +83,41 @@
     "activeDesignSystem": "Active design system",
     "clear": "Clear",
     "designSystemHint": "Link a repo to extract colors, typography, spacing, and other styling cues for future generations.",
-    "startHint": "Start with a brief, then add files, a URL, or a local repo to ground the result."
+    "startHint": "Start with a brief, then add files, a URL, or a local repo to ground the result.",
+    "ariaLabel": "Chat pane",
+    "noDesign": "No design",
+    "newChat": "New chat",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "tabs": {
+      "ariaLabel": "Sidebar tabs",
+      "chat": "Chat",
+      "comments": "Comments"
+    },
+    "chat": {
+      "youLabel": "You",
+      "claudeLabel": "Claude",
+      "noModel": "No model selected",
+      "tokensLine": "~{{count}} tokens",
+      "artifactDelivered": "delivered",
+      "artifactDefaultLabel": "design.html",
+      "tool": {
+        "done": "Done"
+      },
+      "skills": {
+        "label": "Attach skill"
+      },
+      "skill": {
+        "dashboard": "Dashboard",
+        "mobile-mock": "Mobile mock",
+        "marketing": "Marketing",
+        "editorial": "Editorial"
+      }
+    },
+    "comments": {
+      "title": "Comment mode",
+      "body": "Inline comments on the canvas arrive in v0.2.1. You'll be able to click any element in the preview to leave a note or an edit instruction."
+    }
   },
   "settings": {
     "title": "Settings",

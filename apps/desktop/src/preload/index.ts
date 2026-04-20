@@ -88,13 +88,7 @@ export interface Preferences {
  * event types by ignoring them.
  */
 export interface AgentStreamEvent {
-  type:
-    | 'turn_start'
-    | 'text_delta'
-    | 'turn_end'
-    | 'tool_call_start'
-    | 'tool_call_result'
-    | 'error';
+  type: 'turn_start' | 'text_delta' | 'turn_end' | 'tool_call_start' | 'tool_call_result' | 'error';
   designId: string;
   generationId?: string;
   // turn_start
