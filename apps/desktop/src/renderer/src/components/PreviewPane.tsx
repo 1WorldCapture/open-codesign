@@ -122,7 +122,9 @@ interface PreviewSlotProps {
   showCommentUi: boolean;
   commentHintLabel: string;
   pinOverlay: React.ReactNode;
+  interactionMode: string;
   registerIframe: (designId: string, el: HTMLIFrameElement | null) => void;
+  onIframeError: (message: string) => void;
 }
 
 // One iframe per pool entry. Hidden (display:none) when not active, but kept
@@ -139,7 +141,9 @@ function PreviewSlot({
   showCommentUi,
   commentHintLabel,
   pinOverlay,
+  interactionMode,
   registerIframe,
+  onIframeError,
 }: PreviewSlotProps) {
   const srcDocStableKey = useMemo(() => {
     return html
@@ -171,6 +175,16 @@ function PreviewSlot({
       title={`design-preview-${designId}`}
       sandbox="allow-scripts"
       srcDoc={srcDoc}
+      onLoad={(e) => {
+        // Once the iframe's document has actually loaded, its in-page message
+        // handler is ready — this is the reliable moment to (re)post SET_MODE.
+        // The parent's currentDesignId useEffect can fire before the document
+        // loads, so that post may be dropped. Only re-post for the active
+        // slot so we don't redirect background iframes into comment mode.
+        if (!active) return;
+        const target = e.currentTarget as HTMLIFrameElement;
+        postModeToPreviewWindow(target.contentWindow, interactionMode, onIframeError);
+      }}
       className={
         isMobile
           ? 'block w-full h-full bg-transparent border-0'
@@ -267,20 +281,13 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const iframesByDesign = useRef<Map<string, HTMLIFrameElement>>(new Map());
 
-  const registerIframe = useCallback(
-    (designId: string, el: HTMLIFrameElement | null) => {
-      if (el) {
-        iframesByDesign.current.set(designId, el);
-        if (designId === currentDesignId) iframeRef.current = el;
-      } else {
-        iframesByDesign.current.delete(designId);
-        if (iframeRef.current && designId === currentDesignId) {
-          iframeRef.current = null;
-        }
-      }
-    },
-    [currentDesignId],
-  );
+  const registerIframe = useCallback((designId: string, el: HTMLIFrameElement | null) => {
+    if (el) {
+      iframesByDesign.current.set(designId, el);
+    } else {
+      iframesByDesign.current.delete(designId);
+    }
+  }, []);
 
   // When the active design changes, retarget iframeRef and re-broadcast the
   // current interaction mode. Background iframes keep their last mode — fine,
@@ -427,7 +434,9 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
             showCommentUi={showCommentUi}
             commentHintLabel={t('preview.commentModeHint')}
             pinOverlay={pinOverlay}
+            interactionMode={interactionMode}
             registerIframe={registerIframe}
+            onIframeError={pushIframeError}
           />
         ))}
         {!activeHasHtml ? <EmptyState onPickStarter={onPickStarter} /> : null}
