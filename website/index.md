@@ -25,16 +25,22 @@ hero:
 features:
   - icon: 🪶
     title: Bring your own model
-    details: Anthropic, OpenAI, Gemini, DeepSeek, or any OpenAI-compatible relay. Switch providers in Settings. We don't proxy, we don't charge per token.
+    details: Anthropic, OpenAI, Gemini, DeepSeek, or any OpenAI-compatible relay — including keyless (IP-allowlisted) proxies. Switch providers in Settings. We don't proxy, we don't charge per token.
+  - icon: ⚡
+    title: Import in one click
+    details: Already using Claude Code or Codex? Open CoDesign reads your existing config — providers, models, API keys — and brings it all in with a single click.
   - icon: 🏡
     title: Your laptop is the cloud
     details: Designs, prompts, codebase scans — SQLite + encrypted TOML on disk. No mandatory account, no telemetry by default. 100% local.
-  - icon: 🎚️
-    title: AI-tuned sliders
-    details: The model emits the parameters worth tweaking — color, spacing, font — and you drag to refine. No round-tripping the LLM for every nudge.
   - icon: 🪄
     title: Skills, not magic
     details: Anti-AI-slop design Skill ships built-in. Add your own SKILL.md to teach the model your taste. No generic outputs.
+  - icon: 🎚️
+    title: AI-tuned sliders
+    details: The model emits the parameters worth tweaking — color, spacing, font — and you drag to refine. No round-tripping the LLM for every nudge.
+  - icon: 🔀
+    title: Instant design switching
+    details: Hop between your last five designs with zero delay. Preview iframes stay alive in memory — no reparse, no white flash, no waiting for snapshots to reload.
   - icon: 🧬
     title: Codebase to design system
     details: Point at a local repo. We extract Tailwind tokens, CSS vars, and W3C design tokens — every subsequent generation respects them. Coming soon.
@@ -44,9 +50,12 @@ features:
   - icon: 💸
     title: Cost transparency
     details: Token estimate before each generation. Weekly spend in the toolbar. Set a budget, get warned, never get surprised. Coming soon.
+  - icon: 💬
+    title: Comment, don't retype
+    details: Click any element in the preview to drop a pin. Leave a note. The model rewrites only that region — no more re-prompting the whole page to move a button.
   - icon: 🚢
-    title: Three exports, real files
-    details: HTML (inlined CSS) ships today. PDF (Playwright) and PPTX (pptxgenjs) are coming. All generated locally — no Canva detour.
+    title: Five exports, real files
+    details: HTML (inlined CSS), PDF (via your local Chrome), PPTX, ZIP, and Markdown — all generated on-device. No Canva detour.
 ---
 
 <div class="codesign-section">
@@ -67,7 +76,7 @@ features:
   <div class="codesign-step">
     <span class="num">3</span>
     <h3>Refine, export, hand off</h3>
-    <p>Inline comments, AI sliders, snapshot timeline. Export to HTML — PDF and PPTX coming soon.</p>
+    <p>Inline comments, AI sliders, snapshot timeline. Export to HTML, PDF, PPTX, ZIP, or Markdown — all on-device.</p>
   </div>
 </div>
 

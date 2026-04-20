@@ -105,7 +105,7 @@ export default defineConfig({
   },
 
   themeConfig: {
-    logo: { src: '/favicon.ico', alt: 'open-codesign' },
+    logo: { src: '/logo.png', alt: 'open-codesign' },
 
     nav: [
       { text: 'Home', link: '/' },

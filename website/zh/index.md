@@ -25,16 +25,25 @@ hero:
 features:
   - icon: 🪶
     title: 自带模型
-    details: Anthropic、OpenAI、Gemini、DeepSeek，或任意 OpenAI 兼容端点。在设置里切换 provider，我们不做代理，也不按 token 计费。
+    details: Anthropic、OpenAI、Gemini、DeepSeek，或任意 OpenAI 兼容中继——包括 keyless（IP 白名单）代理。设置里切 provider，我们不做代理，也不按 token 计费。
+  - icon: ⚡
+    title: 一键导入配置
+    details: 已经在用 Claude Code 或 Codex？Open CoDesign 直接读你的配置文件——provider、model、API Key，一次带过来。
   - icon: 🏡
     title: 你的电脑就是云
     details: 设计稿、提示词、代码库扫描——SQLite 加密 TOML，全在本地磁盘。无需注册账号，默认无遥测。100% 本地。
-  - icon: 🎚️
-    title: AI 生成的滑块
-    details: 模型主动给出值得调的参数——颜色、间距、字体——拖一下即可微调，不用每次重新发送提示。
   - icon: 🪄
     title: Skills，而非魔法
     details: 内置反 AI 糟粕设计 Skill。添加你自己的 SKILL.md，教会模型你的审美。不再有千篇一律的产出。
+  - icon: 🎚️
+    title: AI 生成的滑块
+    details: 模型主动给出值得调的参数——颜色、间距、字体——拖一下即可微调，不用每次重新发送提示。
+  - icon: 💬
+    title: 评论别重写
+    details: 预览中点击任意元素落一枚 pin，留下注释，模型只重写该区域。不用为了挪一个按钮重新提示整个页面。
+  - icon: 🔀
+    title: 设计间切换瞬答
+    details: 最近 5 个 design 之间切换零延迟。预览 iframe 常驻内存——不重新解析、没白闪、不用等快照重载。
   - icon: 🧬
     title: 代码库 → 设计系统
     details: 指向本地仓库，我们抽取 Tailwind token、CSS 变量和 W3C 设计 token——之后每次生成都自动遵循。即将推出。
@@ -45,8 +54,8 @@ features:
     title: 成本透明
     details: 生成前显示 token 估算，工具栏显示本周花费。设置预算，超出前收到提醒，不再有意外账单。即将推出。
   - icon: 🚢
-    title: 三种导出，真实文件
-    details: HTML（内联 CSS）今日可用。PDF（Playwright）和 PPTX（pptxgenjs）即将推出。全部本地生成，无需绕道 Canva。
+    title: 五种导出，真实文件
+    details: HTML（内联 CSS）、PDF（本机 Chrome）、PPTX、ZIP、Markdown——全部本地生成，无需绕道 Canva。
 ---
 
 <div class="codesign-section">
@@ -67,7 +76,7 @@ features:
   <div class="codesign-step">
     <span class="num">3</span>
     <h3>打磨、导出、交付</h3>
-    <p>元素级评论、AI 滑块、版本时间线。导出 HTML，PDF/PPTX 即将推出。</p>
+    <p>元素级评论、AI 滑块、版本时间线。导出 HTML、PDF、PPTX、ZIP 或 Markdown——全部本地生成。</p>
   </div>
 </div>
 

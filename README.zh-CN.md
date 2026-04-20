@@ -94,11 +94,16 @@ _演示视频即将上线。_
 
 ## 当前已实现功能
 
-- 多 provider 入门流程 — Anthropic、OpenAI 及任意 OpenAI 兼容端点
-- 提示词 → HTML 原型，在沙箱 iframe 中渲染
-- AI 生成滑块：模型主动给出值得调整的参数（颜色、间距、字体），拖动即可微调
-- 内联注释：在预览中点击任意元素，留下评论，模型只重写该区域
-- HTML 导出（内联 CSS）
+- 统一 provider 模型 — Anthropic、OpenAI、Gemini、DeepSeek，或任意 OpenAI 兼容中继；支持 keyless（IP 白名单）代理
+- Claude Code / Codex 配置一键导入 — 把已有的 provider、model、API Key 一次带过来
+- 动态 model 选择器 — 每个 provider 显示自己真实的模型目录，不再写死
+- 提示词 → HTML **或 JSX/React 组件** 原型，在沙箱 iframe 中渲染（vendored React 18 + Babel，全在本机）
+- 实时 agent 面板 — 模型调用工具写文件时的 tool call 流实时可见
+- AI 生成滑块：模型主动给出值得调整的参数（颜色、间距、字体），拖动即可零往返微调
+- 评论模式：在预览中点击任意元素落一枚 pin 留下评论，模型只重写该区域
+- 设计间切换瞬答 — 最近 5 个 design 的预览 iframe 常驻内存，Hub ↔ 工作区、侧栏切换都是零延迟
+- 五种导出格式 — HTML（内联 CSS）、PDF（本机 Chrome）、PPTX、ZIP、Markdown
+- 双语界面 — English 和简体中文
 - 生成取消
 - 设置页面，支持各 provider 独立 API Key 管理
 - GitHub Release 流水线（macOS DMG、Windows EXE、Linux AppImage）
@@ -110,16 +115,24 @@ _演示视频即将上线。_
 | 功能 | 状态 |
 |---|---|
 | 多 provider 入门 + 设置 | ✅ 已上线 |
+| Claude Code / Codex 一键配置导入 | ✅ 已上线 |
+| 每 provider 动态 model 选择器 | ✅ 已上线 |
+| Keyless（IP 白名单）代理支持 | ✅ 已上线 |
 | 提示词 → HTML 原型（沙箱 iframe） | ✅ 已上线 |
+| 提示词 → JSX/React 组件（本机 React 18 + Babel） | ✅ 已上线 |
+| 实时 agent 活动面板（流式 tool call） | ✅ 已上线 |
 | AI 生成可调滑块 | ✅ 已上线 |
-| 内联注释 → AI 修补 | ✅ 已上线 |
+| 评论模式（pin + AI 局部重写） | ✅ 已上线 |
+| 设计间切换瞬答（预览 pool） | ✅ 已上线 |
+| 双语界面（EN + 简体中文） | ✅ 已上线 |
 | HTML 导出（内联 CSS） | ✅ 已上线 |
+| PDF 导出（本机 Chrome） | ✅ 已上线 |
+| PPTX 导出 | ✅ 已上线 |
+| ZIP / Markdown 导出 | ✅ 已上线 |
 | 成本透明（token 估算 + 每周花费） | 🔜 即将推出 |
 | 版本快照 + 并排 diff | 🔜 即将推出 |
 | 代码库 → 设计系统（token 提取） | 🔜 即将推出 |
 | 三风格并发探索 | 🔜 即将推出 |
-| PPTX 导出 | 🔜 即将推出 |
-| PDF 导出 | 🔜 即将推出 |
 | 代码签名（Apple ID + Authenticode）| 🔜 Stage 2 |
 | Figma 图层导出 | 🔜 1.0 版本后 |
 

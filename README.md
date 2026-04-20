@@ -94,11 +94,16 @@ Add a `SKILL.md` to any project to teach the model your own taste.
 
 ## What's working today
 
-- Multi-provider onboarding — Anthropic, OpenAI, and any OpenAI-compatible relay
-- Prompt → HTML prototype, rendered in a sandboxed iframe
-- AI-generated sliders: model emits the parameters worth tweaking (color, spacing, font); drag to refine
-- Inline comments: click any element in the preview, leave a note, model rewrites only that region
-- HTML export with inlined CSS
+- Unified provider model — Anthropic, OpenAI, Gemini, DeepSeek, or any OpenAI-compatible relay; keyless (IP-allowlisted) proxies supported
+- One-click import from Claude Code and Codex configs — bring your existing providers, models, and keys in a single click
+- Dynamic model picker — every provider exposes its real model catalogue, not a hardcoded shortlist
+- Prompt → HTML **or JSX/React component** prototype, rendered in a sandboxed iframe (vendored React 18 + Babel on-device)
+- Live agent panel — watch tool calls stream in real time as the model edits files
+- AI-generated sliders: model emits the parameters worth tweaking (color, spacing, font); drag to refine with zero round-trip
+- Comment mode: click any element in the preview to drop a pin, leave a note, model rewrites only that region
+- Instant design switching — the last five designs keep their preview iframes alive, so Hub ↔ Workspace and sidebar navigation stay zero-delay
+- Five export formats — HTML (inlined CSS), PDF (local Chrome), PPTX, ZIP, Markdown
+- Bilingual UI — English and 简体中文
 - Generation cancellation
 - Settings with per-provider API key management
 - GitHub Release pipeline (macOS DMG, Windows EXE, Linux AppImage)
@@ -110,16 +115,24 @@ Add a `SKILL.md` to any project to teach the model your own taste.
 | Feature | Status |
 |---|---|
 | Multi-provider onboarding + Settings | ✅ Shipped |
+| Claude Code / Codex one-click config import | ✅ Shipped |
+| Dynamic model picker per provider | ✅ Shipped |
+| Keyless (IP-allowlisted) proxy support | ✅ Shipped |
 | Prompt → HTML prototype (sandboxed iframe) | ✅ Shipped |
+| Prompt → JSX/React component (on-device React 18 + Babel) | ✅ Shipped |
+| Live agent activity panel (streaming tool calls) | ✅ Shipped |
 | AI-generated tunable sliders | ✅ Shipped |
-| Inline comment → AI patch | ✅ Shipped |
+| Comment mode (pin + AI region-rewrite) | ✅ Shipped |
+| Instant design switching (preview pool) | ✅ Shipped |
+| Bilingual UI (EN + 简体中文) | ✅ Shipped |
 | HTML export (inlined CSS) | ✅ Shipped |
+| PDF export (local Chrome) | ✅ Shipped |
+| PPTX export | ✅ Shipped |
+| ZIP / Markdown export | ✅ Shipped |
 | Cost transparency (token estimate + weekly spend) | 🔜 Coming |
 | Version snapshots + side-by-side diff | 🔜 Coming |
 | Codebase → design system (token extraction) | 🔜 Coming |
 | Three-style parallel exploration | 🔜 Coming |
-| PPTX export | 🔜 Coming |
-| PDF export | 🔜 Coming |
 | Code-signing (Apple ID + Authenticode) | 🔜 Stage 2 |
 | Figma layer export | 🔜 Post-1.0 |
 
