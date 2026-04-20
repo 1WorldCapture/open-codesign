@@ -7,7 +7,7 @@ import {
   isSupportedOnboardingProvider,
 } from '@open-codesign/shared';
 import { ipcMain } from './electron-runtime';
-import { getApiKeyForProvider, getBaseUrlForProvider, getCachedConfig } from './onboarding-ipc';
+import { getApiKeyForProvider, getCachedConfig } from './onboarding-ipc';
 
 // ---------------------------------------------------------------------------
 // Payload schemas (plain validation, no zod in main to keep bundle lean)
@@ -319,26 +319,18 @@ export function _getModelsCache(): Map<string, CacheEntry> {
 // IPC registration
 // ---------------------------------------------------------------------------
 
-function buildDefaultBaseUrl(provider: SupportedOnboardingProvider): string {
-  switch (provider) {
-    case 'anthropic':
-      return 'https://api.anthropic.com';
-    case 'openai':
-      return 'https://api.openai.com/v1';
-    case 'openrouter':
-      return 'https://openrouter.ai/api/v1';
-  }
-}
-
 interface ActiveProviderCredentials {
-  provider: SupportedOnboardingProvider;
+  provider: string;
+  wire: WireApi;
   apiKey: string;
   baseUrl: string;
+  httpHeaders?: Record<string, string>;
 }
 
 function resolveActiveCredentials(): ActiveProviderCredentials | ConnectionTestError {
   const cfg = getCachedConfig();
-  if (cfg === null || !isSupportedOnboardingProvider(cfg.provider)) {
+  const active = cfg?.activeProvider;
+  if (cfg === null || active === undefined || active.length === 0) {
     return {
       ok: false,
       code: 'IPC_BAD_INPUT',
@@ -346,10 +338,26 @@ function resolveActiveCredentials(): ActiveProviderCredentials | ConnectionTestE
       hint: 'Complete onboarding first',
     };
   }
+  const entry =
+    cfg.providers[active] ??
+    (isSupportedOnboardingProvider(active) ? BUILTIN_PROVIDERS[active] : undefined);
+  if (entry === undefined) {
+    return {
+      ok: false,
+      code: 'IPC_BAD_INPUT',
+      message: `Provider "${active}" not found in config`,
+      hint: 'Re-add the provider from Settings',
+    };
+  }
   try {
-    const apiKey = getApiKeyForProvider(cfg.provider);
-    const baseUrl = getBaseUrlForProvider(cfg.provider) ?? buildDefaultBaseUrl(cfg.provider);
-    return { provider: cfg.provider, apiKey, baseUrl };
+    const apiKey = getApiKeyForProvider(active);
+    return {
+      provider: active,
+      wire: entry.wire,
+      apiKey,
+      baseUrl: entry.baseUrl,
+      ...(entry.httpHeaders !== undefined ? { httpHeaders: entry.httpHeaders } : {}),
+    };
   } catch (err) {
     return {
       ok: false,
@@ -485,15 +493,12 @@ export function registerConnectionIpc(): void {
     const creds = resolveActiveCredentials();
     if (!('provider' in creds)) return creds;
 
-    const ep = buildModelsEndpoint(creds.provider, creds.baseUrl);
-    const authHeaders = buildAuthHeaders(creds.provider, creds.apiKey);
+    const { url } = buildEndpointForWire(creds.wire, creds.baseUrl);
+    const headers = buildAuthHeadersForWire(creds.wire, creds.apiKey, creds.httpHeaders);
 
     let res: Response;
     try {
-      res = await fetchWithTimeout(ep.url, {
-        method: 'GET',
-        headers: { ...ep.headers, ...authHeaders },
-      });
+      res = await fetchWithTimeout(url, { method: 'GET', headers });
     } catch (err) {
       const { code, hint } = classifyNetworkError(err);
       return {
