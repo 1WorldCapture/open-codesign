@@ -31,6 +31,7 @@ import { makeRuntimeVerifier } from './done-verify';
 import { BrowserWindow, app, dialog, ipcMain, shell } from './electron-runtime';
 import { registerExporterIpc } from './exporter-ipc';
 import { armGenerationTimeout, cancelGenerationRequest } from './generation-ipc';
+import { maybeAbortIfRunningFromDmg } from './install-check';
 import { registerLocaleIpc } from './locale-ipc';
 import { getLogPath, getLogger, initLogger } from './logger';
 import {
@@ -786,6 +787,11 @@ function setupAutoUpdater(): void {
 
 void app.whenReady().then(async () => {
   initLogger();
+  // Show a blocking dialog if the user launched from the DMG mount. If
+  // they accept the remedy, we quit here before touching safeStorage / the
+  // snapshots DB so nothing half-initialises against a bad install.
+  const aborted = await maybeAbortIfRunningFromDmg();
+  if (aborted) return;
   await loadConfigOnBoot();
   // Snapshot persistence is best-effort at boot — a failure here (corrupt DB,
   // permission denied, missing native binding) must NOT block the BrowserWindow

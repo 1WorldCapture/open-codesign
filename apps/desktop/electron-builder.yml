@@ -25,6 +25,26 @@ mac:
   target:
     - target: dmg
       arch: [arm64, x64]
+dmg:
+  # Custom window layout guides users to drag the app into /Applications.
+  # Running from the DMG mount leaves safeStorage unavailable (the volume
+  # is read-only so macOS can't establish a keychain trust entry), which
+  # breaks API key save / import. The background, arrow, and in-app boot
+  # check (install-check.ts) work together to steer users to the right
+  # flow.
+  background: build/dmg-background.png
+  iconSize: 92
+  window:
+    width: 640
+    height: 480
+  contents:
+    - x: 140
+      y: 240
+      type: file
+    - x: 500
+      y: 240
+      type: link
+      path: /Applications
 win:
   icon: resources/icon.ico
   target:

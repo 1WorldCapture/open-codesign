@@ -167,6 +167,15 @@ body {
   letter-spacing: -0.01em;
   margin-bottom: 12px;
 }
+/* Hide VitePress's default "#" header-anchor on landing section titles.
+   The anchor is useful in documentation but reads as noise on the
+   marketing home — it wraps the h2 heading with a floating "#" glyph
+   that looks like a broken marker. */
+.codesign-section h2 .header-anchor,
+.codesign-section h3 .header-anchor,
+.codesign-cta h3 .header-anchor {
+  display: none;
+}
 .codesign-section .lede {
   text-align: center;
   color: var(--color-text-secondary);

@@ -9,8 +9,8 @@ hero:
   text: 用心设计。
   tagline: 开源桌面 AI 设计工具。自带模型、本地运行——Claude Design 的自托管替代方案，给无法接受订阅锁定的团队。
   image:
-    src: /og.svg
-    alt: Open CoDesign — 提示词到原型
+    src: /logo-hero.png
+    alt: Open CoDesign — 开源 AI 设计工具
   actions:
     - theme: brand
       text: 下载 macOS 版
@@ -60,6 +60,8 @@ features:
     title: 五种导出，真实文件
     details: HTML（内联 CSS）、PDF（本机 Chrome）、PPTX、ZIP、Markdown——全部本地生成，无需绕道 Canva。
 ---
+
+<SmartDownload />
 
 <div class="codesign-section">
 

@@ -9,8 +9,8 @@ hero:
   text: Design with intent.
   tagline: An open-source desktop AI design tool. Bring your own model, keep everything local — a self-hosted alternative to Claude Design, built for teams who can't afford subscription lock-in.
   image:
-    src: /og.svg
-    alt: Open CoDesign — prompt to prototype
+    src: /logo-hero.png
+    alt: Open CoDesign — open-source AI design tool
   actions:
     - theme: brand
       text: Download for macOS
@@ -60,6 +60,8 @@ features:
     title: Five exports, real files
     details: HTML (inlined CSS), PDF (via your local Chrome), PPTX, ZIP, and Markdown — all generated on-device. No Canva detour.
 ---
+
+<SmartDownload />
 
 <div class="codesign-section">
 
