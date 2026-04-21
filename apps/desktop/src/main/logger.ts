@@ -101,7 +101,12 @@ export function getLogPath(): string {
  *   main.old.1.log -> discarded
  *
  * Synchronous so electron-log v5's archive callback can complete
- * before the next write.
+ * before the next write. Every fs op is wrapped in try/catch: a Windows
+ * file-lock (EBUSY) or a TOCTOU race between existsSync and the rename
+ * must not bubble into electron-log and silently disable rotation going
+ * forward. Failures are reported via `onError` (defaults to a console
+ * fallback since we cannot recurse through `getLogger` from inside the
+ * archive callback).
  */
 export function rotateLogFile(
   activePath: string,
@@ -110,13 +115,35 @@ export function rotateLogFile(
     renameSync: (a: string, b: string) => void;
     unlinkSync: (p: string) => void;
   },
+  onError: (step: string, err: unknown) => void = defaultRotateOnError,
 ): void {
   const dir = dirname(activePath);
   const base = basename(activePath);
   const stem = base.replace(/\.log$/, '');
   const old = join(dir, `${stem}.old.log`);
   const oldest = join(dir, `${stem}.old.1.log`);
-  if (fs.existsSync(oldest)) fs.unlinkSync(oldest);
-  if (fs.existsSync(old)) fs.renameSync(old, oldest);
-  if (fs.existsSync(activePath)) fs.renameSync(activePath, old);
+  try {
+    if (fs.existsSync(oldest)) fs.unlinkSync(oldest);
+  } catch (err) {
+    onError('unlink_oldest', err);
+  }
+  try {
+    if (fs.existsSync(old)) fs.renameSync(old, oldest);
+  } catch (err) {
+    onError('rename_old_to_oldest', err);
+  }
+  try {
+    if (fs.existsSync(activePath)) fs.renameSync(activePath, old);
+  } catch (err) {
+    onError('rename_active_to_old', err);
+  }
+}
+
+function defaultRotateOnError(step: string, err: unknown): void {
+  const message = err instanceof Error ? err.message : String(err);
+  // Write directly to stderr — we cannot route through getLogger() here
+  // because this runs inside electron-log's archive callback and would
+  // recurse. Stderr guarantees the failure is visible in `pnpm dev` and
+  // crash logs without creating additional file I/O.
+  process.stderr.write(`[logger:rotate] ${step} failed: ${message}\n`);
 }

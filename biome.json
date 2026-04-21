@@ -90,12 +90,7 @@
       }
     },
     {
-      "include": [
-        "**/*.test.ts",
-        "**/*.test.tsx",
-        "packages/core/src/prompts/**",
-        "packages/core/src/brand/dtcgImporter.ts"
-      ],
+      "include": ["**/*.test.ts", "**/*.test.tsx", "packages/core/src/prompts/**"],
       "linter": {
         "rules": {
           "suspicious": {
