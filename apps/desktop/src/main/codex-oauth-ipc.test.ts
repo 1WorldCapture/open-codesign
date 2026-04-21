@@ -208,6 +208,24 @@ describe('codex-oauth:v1:login', () => {
     expect(closeMock).toHaveBeenCalled();
     expect(writeConfigMock).not.toHaveBeenCalled();
   });
+
+  it('closes callback server when exchangeCode throws', async () => {
+    waitForCodeMock.mockImplementation(async (expectedState: string) => ({
+      code: 'AUTH_CODE',
+      state: expectedState,
+    }));
+    exchangeCodeMock.mockRejectedValue(new Error('openai returned 400'));
+
+    await register();
+    await expect(handlers.get('codex-oauth:v1:login')?.()).rejects.toThrow(/Codex login failed/);
+
+    expect(closeMock).toHaveBeenCalledTimes(1);
+    expect(writeConfigMock).not.toHaveBeenCalled();
+
+    const { getCodexTokenStore } = await import('./codex-oauth-ipc');
+    const stored = await getCodexTokenStore().read();
+    expect(stored).toBeNull();
+  });
 });
 
 describe('codex-oauth:v1:logout', () => {
