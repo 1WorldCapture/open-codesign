@@ -258,6 +258,8 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
   const previewHtmlByDesign = useCodesignStore((s) => s.previewHtmlByDesign);
   const recentDesignIds = useCodesignStore((s) => s.recentDesignIds);
   const currentDesignId = useCodesignStore((s) => s.currentDesignId);
+  const designs = useCodesignStore((s) => s.designs);
+  const chatMessages = useCodesignStore((s) => s.chatMessages);
   const canvasTabs = useCodesignStore((s) => s.canvasTabs);
   const activeCanvasTab = useCodesignStore((s) => s.activeCanvasTab);
   const errorMessage = useCodesignStore((s) => s.errorMessage);
@@ -398,6 +400,18 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
   const activeHasHtml =
     currentDesignId !== null && poolEntries.some((e) => e.id === currentDesignId);
 
+  // When a design already has persisted content (thumbnail from a prior save,
+  // or chat history), the preview IS coming — we're just waiting on the IPC
+  // round-trip for the snapshot. Show a skeleton instead of the new-design
+  // welcome screen so users don't read the transient state as "load failed".
+  const currentDesign = currentDesignId
+    ? designs.find((d) => d.id === currentDesignId)
+    : undefined;
+  const designHasContent =
+    currentDesign !== undefined &&
+    ((currentDesign.thumbnailText !== null && currentDesign.thumbnailText.length > 0) ||
+      chatMessages.length > 0);
+
   let body: React.ReactNode;
   // Only take over the whole pane with ErrorState when there's nothing to
   // show yet. If the agent produced a preview before failing on the last
@@ -439,13 +453,21 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
             onIframeError={pushIframeError}
           />
         ))}
-        {!activeHasHtml ? <EmptyState onPickStarter={onPickStarter} /> : null}
+        {!activeHasHtml ? (
+          designHasContent ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-background)]">
+              <div className="w-[60%] max-w-[720px] aspect-[4/3] rounded-[var(--radius-lg)] bg-[linear-gradient(110deg,var(--color-background-secondary)_0%,rgba(0,0,0,0.03)_40%,var(--color-background-secondary)_80%)] animate-pulse" />
+            </div>
+          ) : (
+            <EmptyState onPickStarter={onPickStarter} />
+          )
+        ) : null}
       </div>
     );
   }
 
   const hasTabs = canvasTabs.length > 0;
-  const isWelcome = !errorMessage && !previewHtml;
+  const isWelcome = !errorMessage && !previewHtml && !designHasContent;
 
   return (
     <div className="flex min-h-0 flex-1">

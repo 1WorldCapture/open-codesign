@@ -3,6 +3,32 @@ import type { Design } from '@open-codesign/shared';
 import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+// Hub cards render many iframes in parallel; live CSS animations / transitions /
+// autoplaying media in each one thrash compositor + GPU for no user value (the
+// thumbnail is decorative). Inject a stylesheet that freezes motion so cards
+// behave like static snapshots without requiring screenshotting infrastructure.
+const THUMBNAIL_STYLE = `<style>
+*, *::before, *::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+  scrollbar-width: none !important;
+}
+*::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+html, body { overflow: hidden !important; margin: 0 !important; }
+video, audio { display: none !important; }
+</style>`;
+
+function injectThumbnailStyle(srcDoc: string): string {
+  if (/<\/head>/i.test(srcDoc)) {
+    return srcDoc.replace(/<\/head>/i, `${THUMBNAIL_STYLE}</head>`);
+  }
+  return THUMBNAIL_STYLE + srcDoc;
+}
+
 // Lightweight JSX detection — mirrors runtime's isJsxArtifact without importing it.
 function needsJsxRuntime(source: string): boolean {
   if (/<!doctype/i.test(source) || /<html[^>]*>/i.test(source)) return false;
@@ -174,7 +200,8 @@ export function DesignCardPreview({ design }: DesignCardPreviewProps) {
   const isJsx = useMemo(() => (html ? needsJsxRuntime(html) : false), [html]);
   const srcDoc = useMemo(() => {
     if (!html) return null;
-    return isJsx ? buildSrcdoc(html) : html;
+    const base = isJsx ? buildSrcdoc(html) : html;
+    return injectThumbnailStyle(base);
   }, [html, isJsx]);
 
   return (
