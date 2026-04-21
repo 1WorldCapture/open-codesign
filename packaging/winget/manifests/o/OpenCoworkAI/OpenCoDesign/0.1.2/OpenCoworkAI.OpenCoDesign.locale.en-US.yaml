@@ -1,5 +1,5 @@
-PackageIdentifier: OpenCoworkAI.open-codesign
-PackageVersion: 0.1.1
+PackageIdentifier: OpenCoworkAI.OpenCoDesign
+PackageVersion: 0.1.2
 PackageLocale: en-US
 Publisher: OpenCoworkAI
 PublisherUrl: https://github.com/OpenCoworkAI
@@ -22,6 +22,6 @@ Tags:
   - electron
   - open-source
   - prototyping
-ReleaseNotesUrl: https://github.com/OpenCoworkAI/open-codesign/releases/tag/v0.1.1
+ReleaseNotesUrl: https://github.com/OpenCoworkAI/open-codesign/releases/tag/v0.1.2
 ManifestType: defaultLocale
 ManifestVersion: 1.6.0

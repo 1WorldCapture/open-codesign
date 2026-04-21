@@ -1,6 +1,6 @@
 # Distribution channels
 
-Canonical sources for Open CoDesign's package manager manifests. The `packaging/` tree is the source of truth; after each release we run `update-shas.sh` to fill in checksums, commit here, then mirror the per-channel files to the downstream repos listed below.
+Canonical sources for Open CoDesign's package manager manifests. The `packaging/` tree is the source of truth; after each tag push `release.yml` auto-runs `update-shas.sh` and commits the synced manifests back to `main`.
 
 All artifacts are **unsigned** for the v0.1 line. Each channel's README / caveats explains the Gatekeeper or SmartScreen workaround.
 
@@ -11,28 +11,32 @@ packaging/
 ├── homebrew/
 │   └── Casks/open-codesign.rb
 ├── winget/
-│   └── manifests/o/OpenCoworkAI/open-codesign/<version>/
-│       ├── OpenCoworkAI.open-codesign.yaml
-│       ├── OpenCoworkAI.open-codesign.installer.yaml
-│       └── OpenCoworkAI.open-codesign.locale.en-US.yaml
+│   └── manifests/o/OpenCoworkAI/OpenCoDesign/<version>/
+│       ├── OpenCoworkAI.OpenCoDesign.yaml
+│       ├── OpenCoworkAI.OpenCoDesign.installer.yaml
+│       └── OpenCoworkAI.OpenCoDesign.locale.en-US.yaml
 ├── scoop/
 │   └── bucket/open-codesign.json
+├── flatpak/
+│   └── ai.opencowork.codesign.yaml
 └── update-shas.sh
 ```
 
 ## Release flow
 
-1. Push a `vX.Y.Z` tag — `release.yml` builds and publishes the DMG / EXE / AppImage on GitHub Releases.
-2. Once the release is live, run from the repo root:
+1. Push a `vX.Y.Z` tag. `release.yml` builds + publishes the installers.
+2. After `publish` succeeds, the **`bump-manifests`** job auto-runs `update-shas.sh`: it pulls `SHA256SUMS.txt` from the release, rewrites versions / URLs / checksums across all four channels (and auto-creates the new winget version directory by copying from the previous one), then commits the diff back to `main` as `chore(release): sync manifests to vX.Y.Z`.
+3. Downstream mirroring (tap / bucket / winget-pkgs / Flathub) is still handled per-channel — see below.
 
-   ```sh
-   ./packaging/update-shas.sh
-   ```
+To run the sync manually (e.g. to backfill a past release or test script changes):
 
-   It downloads every artifact, computes SHA256, and rewrites the placeholders (`REPLACE_WITH_*_SHA256`) in all three channels' manifests. If you're on slow internet or offline, pass a local directory of pre-downloaded artifacts as the second arg.
+```sh
+./packaging/update-shas.sh              # uses apps/desktop/package.json version
+./packaging/update-shas.sh 0.1.2        # override version
+./packaging/update-shas.sh 0.1.2 ./dist # hash local artifacts instead of downloading
+```
 
-3. `git diff packaging/`, sanity-check, commit.
-4. Mirror to the downstream repos (see below). The tap and bucket repos watch this tree, so the usual workflow is a copy-push per channel.
+The script derives the mac `.app` bundle name and Windows `.exe` from `productName` in `apps/desktop/electron-builder.yml`, so renaming productName propagates into the cask's `app` field and the scoop `bin` automatically.
 
 ## Channel-specific mirroring
 
@@ -60,16 +64,16 @@ brew install --cask open-codesign
 
 ### winget — `microsoft/winget-pkgs`
 
-Microsoft's monorepo. Fork it, copy `packaging/winget/manifests/o/OpenCoworkAI/open-codesign/<version>/` into the same path in the fork, open a PR. `wingetcreate validate` is worth running first:
+Microsoft's monorepo. Fork it, copy `packaging/winget/manifests/o/OpenCoworkAI/OpenCoDesign/<version>/` into the same path in the fork, open a PR. `wingetcreate validate` is worth running first:
 
 ```sh
-wingetcreate validate packaging/winget/manifests/o/OpenCoworkAI/open-codesign/0.1.0
+wingetcreate validate packaging/winget/manifests/o/OpenCoworkAI/OpenCoDesign/0.1.2
 ```
 
 Users install with:
 
 ```pwsh
-winget install OpenCoworkAI.open-codesign
+winget install OpenCoworkAI.OpenCoDesign
 ```
 
 ### Scoop — `OpenCoworkAI/scoop-bucket`
