@@ -834,6 +834,16 @@ function registerIpcHandlers(): void {
   ipcMain.handle('codesign:open-log-folder', async () => {
     await shell.openPath(getLogPath());
   });
+
+  ipcMain.handle('codesign:open-external', async (_e, url: unknown) => {
+    if (typeof url !== 'string') {
+      throw new CodesignError('codesign:open-external requires a string url', 'IPC_BAD_INPUT');
+    }
+    if (!url.startsWith('https://github.com/OpenCoworkAI/open-codesign/')) {
+      throw new CodesignError('URL not allowed', 'IPC_BAD_INPUT');
+    }
+    await shell.openExternal(url);
+  });
 }
 
 function setupAutoUpdater(): void {

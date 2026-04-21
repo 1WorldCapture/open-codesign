@@ -116,6 +116,7 @@ export interface GenerateResponse {
 export interface Preferences {
   updateChannel: UpdateChannel;
   generationTimeoutSec: number;
+  dismissedUpdateVersion: string;
 }
 
 /**
@@ -510,6 +511,7 @@ const api = {
     showItemInFolder: (path: string) =>
       ipcRenderer.invoke('diagnostics:v1:showItemInFolder', path) as Promise<void>,
   },
+  openExternal: (url: string) => ipcRenderer.invoke('codesign:open-external', url) as Promise<void>,
 };
 
 contextBridge.exposeInMainWorld('codesign', api);

@@ -1,6 +1,6 @@
 import { useT } from '@open-codesign/i18n';
 import { ChevronLeft } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DeleteDesignDialog } from './components/DeleteDesignDialog';
 import { DesignsView } from './components/DesignsView';
 import { PreviewPane } from './components/PreviewPane';
@@ -9,8 +9,11 @@ import { Settings } from './components/Settings';
 import { Sidebar } from './components/Sidebar';
 import { ToastViewport } from './components/Toast';
 import { TopBar } from './components/TopBar';
+import { UpdateBanner } from './components/UpdateBanner';
 import { CommentsPanel } from './components/comment/CommentsPanel';
 import { useKeyboard } from './hooks/useKeyboard';
+import { useUpdateWiring } from './hooks/useUpdateWiring';
+import { createUpdateStore } from './state/update-store';
 import { useCodesignStore } from './store';
 import { HubView } from './views/HubView';
 
@@ -44,6 +47,20 @@ export function App() {
     Math.max(320, Math.round(window.innerWidth * 0.25)),
   );
   const [isResizing, setIsResizing] = useState(false);
+
+  const updateStore = useRef(createUpdateStore({ dismissedVersion: '' }));
+  useUpdateWiring(updateStore.current);
+
+  // Seed the dismissed version from persisted preferences once on mount.
+  useEffect(() => {
+    if (!window.codesign) return;
+    void window.codesign.preferences.get().then((prefs) => {
+      const dismissed = prefs.dismissedUpdateVersion ?? '';
+      if (dismissed) {
+        updateStore.current.setState({ dismissedVersion: dismissed });
+      }
+    });
+  }, []);
   // Once the user has visited Hub we keep HubView mounted (toggled via
   // `hidden`) so going Workspace → Hub doesn't tear down the design-card
   // iframes and pay the srcDoc parse cost again.
@@ -185,6 +202,7 @@ export function App() {
 
   return (
     <div className="h-full flex flex-col bg-[var(--color-background)]">
+      <UpdateBanner store={updateStore.current} />
       <TopBar />
       <div className="flex-1 min-h-0 relative">
         {view === 'settings' ? <Settings /> : null}

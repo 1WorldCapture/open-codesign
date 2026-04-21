@@ -1374,6 +1374,7 @@ function AdvancedTab() {
   const [prefs, setPrefs] = useState<Preferences>({
     updateChannel: 'stable',
     generationTimeoutSec: 120,
+    dismissedUpdateVersion: '',
   });
 
   useEffect(() => {
