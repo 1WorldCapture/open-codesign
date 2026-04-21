@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
-import { readFile, stat, unlink } from 'node:fs/promises';
+import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TokenSet } from './oauth';
 import { CodexTokenStore, type CodexTokenStoreOptions, type StoredCodexAuth } from './token-store';
@@ -195,5 +195,32 @@ describe('CodexTokenStore', () => {
     await store.clear();
     await expect(readFile(filePath, 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
     await expect(store.getValidAccessToken()).rejects.toThrow('No Codex credentials stored');
+  });
+
+  it('read throws on malformed JSON', async () => {
+    const { store, filePath } = makeStore();
+    await mkdir(dirname(filePath), { recursive: true });
+    await writeFile(filePath, '{not:"json', 'utf8');
+    await expect(store.read()).rejects.toThrow(/Invalid Codex token store/);
+  });
+
+  it('read throws when schemaVersion is not 1', async () => {
+    const { store, filePath } = makeStore();
+    await mkdir(dirname(filePath), { recursive: true });
+    await writeFile(
+      filePath,
+      JSON.stringify({
+        schemaVersion: 2,
+        accessToken: 'a',
+        refreshToken: 'r',
+        idToken: 'i',
+        expiresAt: 1,
+        accountId: null,
+        email: null,
+        updatedAt: 1,
+      }),
+      'utf8',
+    );
+    await expect(store.read()).rejects.toThrow(/Invalid Codex token store/);
   });
 });
