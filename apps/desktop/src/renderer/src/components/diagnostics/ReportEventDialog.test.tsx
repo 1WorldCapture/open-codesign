@@ -111,7 +111,7 @@ describe('formatPreview', () => {
       { includePromptText: false, includePaths: false, includeUrls: false },
       LABELS,
     );
-    expect(out).toContain('Message: failed at <redacted path>');
+    expect(out).toContain('Message: failed at <path omitted>');
     expect(out).not.toContain('/Users/alice');
   });
 
@@ -165,7 +165,7 @@ describe('formatPreview', () => {
       { includePromptText: false, includePaths: false, includeUrls: false },
       LABELS,
     );
-    expect(out).toContain('Body head: see <redacted url> at <redacted path>');
+    expect(out).toContain('Body head: see <url omitted> at <path omitted>');
   });
 
   it('omits status row when upstream_status is null', () => {
