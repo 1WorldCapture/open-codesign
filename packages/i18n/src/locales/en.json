@@ -126,6 +126,9 @@
       "youLabel": "You",
       "claudeLabel": "Claude",
       "noModel": "No model selected",
+      "addMenu": {
+        "trigger": "Add context"
+      },
       "thinking": "Thinking",
       "tokensLine": "~{{count}} tokens",
       "artifactDelivered": "delivered",

@@ -127,6 +127,9 @@
       "youLabel": "你",
       "claudeLabel": "Claude",
       "noModel": "未选择模型",
+      "addMenu": {
+        "trigger": "添加上下文"
+      },
       "thinking": "正在思考",
       "tokensLine": "约 {{count}} tokens",
       "artifactDelivered": "已生成",
