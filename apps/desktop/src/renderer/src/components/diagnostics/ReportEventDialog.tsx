@@ -105,12 +105,17 @@ export function formatPreview(
     const requestId = ctx['upstream_request_id'];
     const retry = ctx['retry_count'];
     const bodyHead = ctx['redacted_body_head'];
-    if (provider !== undefined) upstreamRows.push(`Provider: ${String(provider)}`);
-    if (status !== undefined) upstreamRows.push(`Status: ${String(status)}`);
-    if (requestId !== undefined) upstreamRows.push(`Request-Id: ${String(requestId)}`);
-    if (retry !== undefined) upstreamRows.push(`Retry: ${String(retry)}`);
-    if (bodyHead !== undefined) {
-      const redactedBody = applyRedaction(String(bodyHead), opts).slice(0, BODY_HEAD_MAX);
+    // Mirror main-process `asString` semantics: treat both null and undefined
+    // as absent so the preview omits exactly when the bundle will.
+    if (provider != null) upstreamRows.push(`Provider: ${String(provider)}`);
+    if (status != null) upstreamRows.push(`Status: ${String(status)}`);
+    if (requestId != null) upstreamRows.push(`Request-Id: ${String(requestId)}`);
+    if (retry != null) upstreamRows.push(`Retry: ${String(retry)}`);
+    if (bodyHead != null) {
+      const redacted = applyRedaction(String(bodyHead), opts);
+      // Match main-process truncate(): append an ellipsis when cut.
+      const redactedBody =
+        redacted.length > BODY_HEAD_MAX ? `${redacted.slice(0, BODY_HEAD_MAX)}…` : redacted;
       upstreamRows.push(`Body head: ${redactedBody}`);
     }
     if (upstreamRows.length > 0) {

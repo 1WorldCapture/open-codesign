@@ -167,4 +167,57 @@ describe('formatPreview', () => {
     );
     expect(out).toContain('Body head: see <redacted url> at <redacted path>');
   });
+
+  it('omits status row when upstream_status is null', () => {
+    const event = makeEvent({
+      scope: 'provider',
+      context: {
+        upstream_provider: 'anthropic',
+        upstream_status: null,
+        upstream_request_id: 'req_abc',
+      },
+    });
+    const out = formatPreview(
+      event,
+      { includePromptText: false, includePaths: false, includeUrls: false },
+      LABELS,
+    );
+    expect(out).not.toContain('Status:');
+    expect(out).not.toContain('null');
+    expect(out).toContain('Request-Id: req_abc');
+  });
+
+  it('omits request_id row when upstream_request_id is null', () => {
+    const event = makeEvent({
+      scope: 'provider',
+      context: {
+        upstream_provider: 'anthropic',
+        upstream_status: 500,
+        upstream_request_id: null,
+      },
+    });
+    const out = formatPreview(
+      event,
+      { includePromptText: false, includePaths: false, includeUrls: false },
+      LABELS,
+    );
+    expect(out).not.toContain('Request-Id:');
+    expect(out).not.toContain('null');
+    expect(out).toContain('Status: 500');
+  });
+
+  it('appends ellipsis to body head when it exceeds 400 chars', () => {
+    const longBody = 'a'.repeat(450);
+    const event = makeEvent({
+      scope: 'provider',
+      context: { redacted_body_head: longBody },
+    });
+    const out = formatPreview(
+      event,
+      { includePromptText: false, includePaths: false, includeUrls: true },
+      LABELS,
+    );
+    expect(out).toContain(`Body head: ${'a'.repeat(400)}…`);
+    expect(out).not.toContain('a'.repeat(401));
+  });
 });
