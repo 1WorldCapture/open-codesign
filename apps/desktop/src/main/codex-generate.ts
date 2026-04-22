@@ -241,5 +241,9 @@ export async function runCodexGenerate(input: CodexGenerateInput): Promise<Codex
     artifacts: artifacts.length,
   });
 
-  return { artifacts, rawOutput: result.text, issues: [] };
+  const issues =
+    artifacts.length === 0
+      ? ['模型未返回 <artifact> 包装，请重试或换一个模型。']
+      : [];
+  return { artifacts, rawOutput: result.text, issues };
 }

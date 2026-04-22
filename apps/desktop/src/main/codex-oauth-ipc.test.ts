@@ -353,8 +353,10 @@ describe('codex-oauth:v1:logout', () => {
       accountId: null,
       expiresAt: null,
     });
-    expect(writeConfigMock).toHaveBeenCalledTimes(1);
+    expect(writeConfigMock).toHaveBeenCalledTimes(2);
     expect(fakeCachedConfig?.providers['chatgpt-codex']).toBeUndefined();
+    expect(fakeCachedConfig?.activeProvider).toBe('');
+    expect(fakeCachedConfig?.activeModel).toBe('');
     const stored = await getCodexTokenStore().read();
     expect(stored).toBeNull();
   });

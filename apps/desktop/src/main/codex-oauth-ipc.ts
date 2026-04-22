@@ -194,6 +194,12 @@ async function runLogout(): Promise<CodexOAuthStatus> {
       return providers;
     });
   }
+  const cfgAfter = getCachedConfig();
+  if (cfgAfter !== null && cfgAfter.activeProvider === CHATGPT_CODEX_PROVIDER_ID) {
+    const next: Config = { ...cfgAfter, activeProvider: '', activeModel: '' };
+    await writeConfig(next);
+    setCachedConfig(next);
+  }
   logger.info('codex.oauth.logout.ok');
   return { loggedIn: false, email: null, accountId: null, expiresAt: null };
 }
