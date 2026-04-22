@@ -2,10 +2,15 @@ import { readFile } from 'node:fs/promises';
 import { type ValidateResult, pingProvider } from '@open-codesign/providers';
 import {
   BUILTIN_PROVIDERS,
+  type ClaudeCodeDetectionMeta,
   CodesignError,
+  type CodexDetectionMeta,
   type Config,
   ERROR_CODES,
+  type ExternalConfigsDetection,
+  type GeminiDetectionMeta,
   type OnboardingState,
+  type OpencodeDetectionMeta,
   type ProviderEntry,
   type ReasoningLevel,
   ReasoningLevelSchema,
@@ -761,60 +766,10 @@ async function runUpdateProvider(input: UpdateProviderInput): Promise<Onboarding
   return toState(cachedConfig);
 }
 
-interface ClaudeCodeDetectionMeta {
-  userType: ClaudeCodeImport['userType'];
-  baseUrl: string;
-  defaultModel: string;
-  hasApiKey: boolean;
-  apiKeySource: ClaudeCodeImport['apiKeySource'];
-  settingsPath: string;
-  warnings: string[];
-}
-
-interface CodexDetectionMeta {
-  /** Provider ids + basic metadata the banner needs. Does NOT include keys;
-   *  `apiKeyMap` stays in the main process and is re-read from disk at
-   *  import time. */
-  providers: ProviderEntry[];
-  activeProvider: string | null;
-  activeModel: string | null;
-  warnings: string[];
-}
-
-interface OpencodeDetectionMeta {
-  /** Same contract as CodexDetectionMeta: provider metadata only, no keys. */
-  providers: ProviderEntry[];
-  activeProvider: string | null;
-  activeModel: string | null;
-  warnings: string[];
-  /** True when we found opencode evidence (auth.json exists) but nothing is
-   *  importable — typically because the file is malformed JSON or every
-   *  entry was OAuth/wellknown/unknown. The UI renders a warning-only
-   *  banner so the user knows we saw their setup and why it was rejected,
-   *  instead of silently offering no button. Mirrors GeminiDetectionMeta. */
-  blocked: boolean;
-}
-
-interface ExternalConfigsDetection {
-  codex?: CodexDetectionMeta;
-  claudeCode?: ClaudeCodeDetectionMeta;
-  gemini?: GeminiDetectionMeta;
-  opencode?: OpencodeDetectionMeta;
-}
-
-interface GeminiDetectionMeta {
-  hasApiKey: boolean;
-  apiKeySource: 'gemini-env' | 'home-env' | 'shell-env' | 'none';
-  /** Absolute path of the `.env` that supplied the key, if any. */
-  keyPath: string | null;
-  baseUrl: string;
-  defaultModel: string;
-  warnings: string[];
-  /** Vertex AI users land here: provider=null, hasApiKey=false, warning set.
-   *  Banner should render a "Vertex detected — manual config required" note
-   *  rather than an import button. */
-  blocked: boolean;
-}
+// `ExternalConfigsDetection` and its four `*DetectionMeta` satellites now
+// live in `packages/shared/src/detection.ts` so the main process and the
+// preload facade can import one source — see that file's header for the
+// "we were drifting silently" background.
 
 async function detectChatgptSubscription(): Promise<boolean> {
   try {
