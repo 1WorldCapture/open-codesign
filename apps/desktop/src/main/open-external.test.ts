@@ -49,8 +49,8 @@ describe('isAllowedExternalUrl', () => {
 
   it('does not accept a prefix-smuggled path like /issuesFAKE', () => {
     // Exact "/issues" or "/issues/..." — not "/issuesEVIL/..."
-    expect(
-      isAllowedExternalUrl('https://github.com/OpenCoworkAI/open-codesign/issuesEVIL/1'),
-    ).toBe(false);
+    expect(isAllowedExternalUrl('https://github.com/OpenCoworkAI/open-codesign/issuesEVIL/1')).toBe(
+      false,
+    );
   });
 });

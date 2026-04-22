@@ -290,6 +290,17 @@ describe('composeSummaryMarkdown', () => {
       expect(md).toContain('<path omitted>');
     });
 
+    it('redacts Windows forward-slash drive-letter paths (Electron/Node style)', () => {
+      const md = composeSummaryMarkdown(
+        baseInput({
+          event: baseEvent({ message: 'fail at C:/Users/alice/project/foo.ts line 10' }),
+          includePaths: false,
+        }),
+      );
+      expect(md).not.toContain('C:/Users/alice');
+      expect(md).toContain('<path omitted>');
+    });
+
     it('redacts UNC paths', () => {
       const md = composeSummaryMarkdown(
         baseInput({

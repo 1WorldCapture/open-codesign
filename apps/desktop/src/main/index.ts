@@ -44,7 +44,6 @@ import { armGenerationTimeout, cancelGenerationRequest } from './generation-ipc'
 import { maybeAbortIfRunningFromDmg } from './install-check';
 import { registerLocaleIpc } from './locale-ipc';
 import { getLogPath, getLogger, initLogger } from './logger';
-import { isAllowedExternalUrl } from './open-external';
 import {
   getApiKeyForProvider,
   getCachedConfig,
@@ -53,6 +52,7 @@ import {
   registerOnboardingIpc,
   setDesignSystem,
 } from './onboarding-ipc';
+import { isAllowedExternalUrl } from './open-external';
 import { readPersisted as readPreferences, registerPreferencesIpc } from './preferences-ipc';
 import { preparePromptContext } from './prompt-context';
 import { createProviderContextStore } from './provider-context';

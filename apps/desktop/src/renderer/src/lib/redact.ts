@@ -21,7 +21,7 @@ const PROMPT_BAREWORD_QUOTE_REGEX = /(\bprompt\s*[:=]\s*)"(?:[^"\\]|\\.)*"/g;
 const PROMPT_BAREWORD_TICK_REGEX = /(\bprompt\s*[:=]\s*)`(?:[^`\\]|\\.)*`/g;
 
 const PATH_REGEX =
-  /(?:(?:[A-Za-z]:\\|\\\\)[^\s'"<>`]+|(?:[/\\](?:Users|home|root|opt|Applications|var|tmp|etc|private))[/\\][^\s'"<>`]+|~[/\\][^\s'"<>`]+)/g;
+  /(?:(?:\b[A-Za-z]:[\\/]|\\\\)[^\s'"<>`]+|(?:[/\\](?:Users|home|root|opt|Applications|var|tmp|etc|private))[/\\][^\s'"<>`]+|~[/\\][^\s'"<>`]+)/g;
 const URL_REGEX = /(?:https?|wss?|file):\/\/[^\s'"<>]+/g;
 
 /** Byte-identical to main's diagnostic-summary.ts constants. */

@@ -33,6 +33,16 @@ describe('redactPaths', () => {
     const input = 'Failed at /Users/alice/Documents/secret.md';
     expect(redactPaths(input)).toBe('Failed at <path omitted>');
   });
+
+  it('redacts Windows backslash drive-letter paths', () => {
+    const input = 'Failed at C:\\Users\\alice\\project\\foo.ts';
+    expect(redactPaths(input)).toBe('Failed at <path omitted>');
+  });
+
+  it('redacts Windows forward-slash drive-letter paths (Electron/Node style)', () => {
+    const input = 'Failed at C:/Users/alice/project/foo.ts';
+    expect(redactPaths(input)).toBe('Failed at <path omitted>');
+  });
 });
 
 describe('redactUrls', () => {

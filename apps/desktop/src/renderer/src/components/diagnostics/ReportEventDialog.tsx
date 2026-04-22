@@ -115,8 +115,7 @@ export function formatPreview(
     // as absent so the preview omits exactly when the bundle will.
     if (provider != null) upstreamRows.push(`${labels.upstreamProvider}: ${String(provider)}`);
     if (status != null) upstreamRows.push(`${labels.upstreamStatus}: ${String(status)}`);
-    if (requestId != null)
-      upstreamRows.push(`${labels.upstreamRequestId}: ${String(requestId)}`);
+    if (requestId != null) upstreamRows.push(`${labels.upstreamRequestId}: ${String(requestId)}`);
     if (retry != null) upstreamRows.push(`${labels.upstreamRetry}: ${String(retry)}`);
     if (bodyHead != null) {
       const redacted = applyRedaction(String(bodyHead), opts);
