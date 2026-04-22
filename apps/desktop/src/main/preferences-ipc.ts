@@ -17,7 +17,7 @@ import { getLogger } from './logger';
 
 const logger = getLogger('preferences-ipc');
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 // v1 → v2: raise the abandoned 120s timeout default (which aborted real
 // agentic runs mid-loop) to 600s. Values that happen to equal the old
 // default are treated as unmigrated defaults, not user intent.
@@ -37,6 +37,10 @@ export interface Preferences {
   generationTimeoutSec: number;
   checkForUpdatesOnStartup: boolean;
   dismissedUpdateVersion: string;
+  /** Epoch ms of the last time the user opened the Diagnostics panel.
+   *  Persisted so the unread-error badge doesn't flash every historical
+   *  error after a restart. */
+  diagnosticsLastReadTs: number;
 }
 
 interface PreferencesFile extends Preferences {
@@ -52,6 +56,7 @@ const DEFAULTS: Preferences = {
   generationTimeoutSec: 1200,
   checkForUpdatesOnStartup: true,
   dismissedUpdateVersion: '',
+  diagnosticsLastReadTs: 0,
 };
 
 export async function readPersisted(): Promise<Preferences> {
@@ -84,6 +89,10 @@ export async function readPersisted(): Promise<Preferences> {
         typeof parsed.dismissedUpdateVersion === 'string'
           ? parsed.dismissedUpdateVersion
           : DEFAULTS.dismissedUpdateVersion,
+      diagnosticsLastReadTs:
+        typeof parsed.diagnosticsLastReadTs === 'number' && parsed.diagnosticsLastReadTs >= 0
+          ? parsed.diagnosticsLastReadTs
+          : DEFAULTS.diagnosticsLastReadTs,
     };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return { ...DEFAULTS };
@@ -139,6 +148,15 @@ function parsePreferences(raw: unknown): Partial<Preferences> {
       throw new CodesignError('dismissedUpdateVersion must be a string', ERROR_CODES.IPC_BAD_INPUT);
     }
     out.dismissedUpdateVersion = r['dismissedUpdateVersion'];
+  }
+  if (r['diagnosticsLastReadTs'] !== undefined) {
+    if (typeof r['diagnosticsLastReadTs'] !== 'number' || r['diagnosticsLastReadTs'] < 0) {
+      throw new CodesignError(
+        'diagnosticsLastReadTs must be a non-negative number',
+        ERROR_CODES.IPC_BAD_INPUT,
+      );
+    }
+    out.diagnosticsLastReadTs = r['diagnosticsLastReadTs'];
   }
   return out;
 }

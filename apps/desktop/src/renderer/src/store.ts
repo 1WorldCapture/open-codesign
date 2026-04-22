@@ -214,6 +214,9 @@ interface CodesignState {
   /** Timestamp of the last time the user opened the Diagnostics panel.
    *  `unreadErrorCount` counts error-level events whose `ts > lastReadTs`. */
   lastReadTs: number;
+  /** Guard so we only hydrate `lastReadTs` from persisted preferences once
+   *  per session — first `refreshDiagnosticEvents` call does the read. */
+  diagnosticsPrefsHydrated: boolean;
   refreshDiagnosticEvents: () => Promise<void>;
   markDiagnosticsRead: () => void;
   reportDiagnosticEvent: (
@@ -1114,6 +1117,7 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
   recentEvents: [],
   unreadErrorCount: 0,
   lastReadTs: 0,
+  diagnosticsPrefsHydrated: false,
 
   clearIframeErrors() {
     set({ iframeErrors: [] });
@@ -2323,6 +2327,20 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
   async refreshDiagnosticEvents() {
     const api = window.codesign?.diagnostics;
     if (!api?.listEvents) return;
+    // Hydrate the persisted lastReadTs once per session so the unread badge
+    // survives a restart instead of counting every historical error as new.
+    if (!get().diagnosticsPrefsHydrated) {
+      try {
+        const prefs = await window.codesign?.preferences?.get?.();
+        const persisted = prefs?.diagnosticsLastReadTs;
+        if (typeof persisted === 'number' && persisted > 0) {
+          set({ lastReadTs: persisted });
+        }
+      } catch {
+        // Non-fatal: fall back to default 0.
+      }
+      set({ diagnosticsPrefsHydrated: true });
+    }
     const result = await api.listEvents({
       schemaVersion: 1,
       limit: 100,
@@ -2335,7 +2353,12 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
   },
 
   markDiagnosticsRead() {
-    set({ unreadErrorCount: 0, lastReadTs: Date.now() });
+    const now = Date.now();
+    set({ unreadErrorCount: 0, lastReadTs: now });
+    void window.codesign?.preferences?.update?.({ diagnosticsLastReadTs: now })?.catch(() => {
+      // Non-fatal: if persistence fails the in-memory value still works for
+      // this session.
+    });
   },
 
   async reportDiagnosticEvent(input) {

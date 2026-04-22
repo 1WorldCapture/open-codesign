@@ -32,6 +32,10 @@ function makeEvent(partial: Partial<DiagnosticEventRow>): DiagnosticEventRow {
 function stubWindow(
   listEvents: ReturnType<typeof vi.fn>,
   reportEvent: ReturnType<typeof vi.fn>,
+  preferences?: {
+    get?: ReturnType<typeof vi.fn>;
+    update?: ReturnType<typeof vi.fn>;
+  },
 ): void {
   (globalThis as unknown as { window: { codesign: unknown } }).window = {
     codesign: {
@@ -39,6 +43,7 @@ function stubWindow(
         listEvents,
         reportEvent,
       },
+      ...(preferences ? { preferences } : {}),
     },
   };
 }
@@ -49,6 +54,7 @@ beforeEach(() => {
     recentEvents: [],
     unreadErrorCount: 0,
     lastReadTs: 0,
+    diagnosticsPrefsHydrated: false,
   });
   resetTimeline();
 });
@@ -133,5 +139,45 @@ describe('diagnostics slice', () => {
     expect(payload.timeline).toHaveLength(1);
     expect(payload.timeline[0]?.type).toBe('prompt.submit');
     expect(result.issueUrl).toBe('https://example.com/issue');
+  });
+
+  it('hydrates lastReadTs from preferences on first refresh', async () => {
+    const persistedTs = Date.now() - 60_000;
+    const events: DiagnosticEventRow[] = [
+      makeEvent({ id: 1, ts: persistedTs - 10_000, level: 'error' }),
+      makeEvent({ id: 2, ts: persistedTs + 10_000, level: 'error' }),
+    ];
+    const listEvents = vi
+      .fn<(...args: unknown[]) => Promise<ListEventsResult>>()
+      .mockResolvedValue({ schemaVersion: 1, events, dbAvailable: true });
+    const reportEvent = vi.fn<(...args: unknown[]) => Promise<ReportEventResult>>();
+    const prefsGet = vi.fn().mockResolvedValue({ diagnosticsLastReadTs: persistedTs });
+    const prefsUpdate = vi.fn();
+    stubWindow(listEvents, reportEvent, { get: prefsGet, update: prefsUpdate });
+
+    await useCodesignStore.getState().refreshDiagnosticEvents();
+
+    expect(prefsGet).toHaveBeenCalledTimes(1);
+    const state = useCodesignStore.getState();
+    expect(state.lastReadTs).toBe(persistedTs);
+    // Only the event after persistedTs counts as unread.
+    expect(state.unreadErrorCount).toBe(1);
+    expect(state.diagnosticsPrefsHydrated).toBe(true);
+
+    // Second refresh must not re-read preferences.
+    await useCodesignStore.getState().refreshDiagnosticEvents();
+    expect(prefsGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('markDiagnosticsRead writes new value to persisted preferences', async () => {
+    const prefsUpdate = vi.fn().mockResolvedValue({});
+    stubWindow(vi.fn(), vi.fn(), { get: vi.fn().mockResolvedValue({}), update: prefsUpdate });
+
+    useCodesignStore.getState().markDiagnosticsRead();
+
+    expect(prefsUpdate).toHaveBeenCalledTimes(1);
+    const arg = prefsUpdate.mock.calls[0]?.[0] as { diagnosticsLastReadTs: number };
+    expect(typeof arg.diagnosticsLastReadTs).toBe('number');
+    expect(arg.diagnosticsLastReadTs).toBeGreaterThan(0);
   });
 });

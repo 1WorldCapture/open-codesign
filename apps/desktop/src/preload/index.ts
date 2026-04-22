@@ -140,6 +140,7 @@ export interface Preferences {
   generationTimeoutSec: number;
   checkForUpdatesOnStartup: boolean;
   dismissedUpdateVersion: string;
+  diagnosticsLastReadTs: number;
 }
 
 /**

@@ -45,6 +45,7 @@ describe('readPersisted()', () => {
       generationTimeoutSec: 1200,
       checkForUpdatesOnStartup: true,
       dismissedUpdateVersion: '',
+      diagnosticsLastReadTs: 0,
     });
   });
 
